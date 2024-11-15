@@ -31,38 +31,21 @@
 | SOFTWARE.                                      |
 \************************************************/
 
-#include <stdio.h>
-#include <SDL2/SDL.h>
-#include "gui.h"
+#ifndef GUI_H__
+#define GUI_H__
+
+#include <SDL2/SDL_surface.h>
 #include "rgb24.h"
 
-int main(int argc, char **argv){
-    // initialize SDL
-    if(SDL_Init(SDL_INIT_VIDEO)){
-        fprintf(stderr, "Failed to initialize SDL in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
-        goto _clean_and_exit;
-    }
+// sets up gui to render an image of size {width, height} and multiply its size by scalar for showing
+int gui_setup(int width, int height, int scalar);
+// frees everything gui uses
+void gui_free();
 
-    // initialize gui
-    if(gui_setup(128, 64, 4)){
-        fprintf(stderr, "Failed to initialize gui in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        goto _clean_and_exit;
-    }
+// renders current visuals to the window
+int gui_present();
 
-    // debug scene
-    for(int y = 0; y < 64; ++y){
-        for(int x = 0; x < 128; ++x){
-            gui_set_px(x, y, RGB24(x * 0xff / 128, y * 0xff / 64, 0));
-        }
-    }
-    gui_present();
+// sets pixel at {x, y} of gui's internal buffer to color
+int gui_set_px(int x, int y, rgb24_t color);
 
-    // wait til enter is pressed
-    while(getchar() != '\n');
-
-    // clean and exit
-    _clean_and_exit:;
-    gui_free();
-    SDL_Quit();
-    return 0;
-}
+#endif

@@ -3,8 +3,8 @@ CC        := gcc
 CVERSION  := -std=gnu11
 CWARNS    := -Wall
 CC_OPT    := -O0
-CINCLUDES :=
-CLIBS     :=
+CINCLUDES := -I/usr/include/SDL2 -D_REENTRANT
+CLIBS     := -L/usr/lib -lSDL2
 CDEFINES  :=
 
 # source, input resources, object and binary directories
@@ -42,7 +42,7 @@ all: $(TARGET) $(RCS_OUTP)
 # compile and link program
 $(TARGET): $(OBJS)
 	@mkdir -p $(dir $@)
-	$(CC) -o $@ $^ $(CFALGS)
+	$(CC) -o $@ $^ $(CFLAGS)
 $(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
 	@mkdir -p $(dir $@)
 	$(CC) -o $@ $< -c $(CFLAGS)

@@ -31,38 +31,22 @@
 | SOFTWARE.                                      |
 \************************************************/
 
-#include <stdio.h>
-#include <SDL2/SDL.h>
-#include "gui.h"
-#include "rgb24.h"
+#ifndef RBG24_H__
+#define RBG24_H__
 
-int main(int argc, char **argv){
-    // initialize SDL
-    if(SDL_Init(SDL_INIT_VIDEO)){
-        fprintf(stderr, "Failed to initialize SDL in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
-        goto _clean_and_exit;
-    }
+#include <stdint.h>
+#include <stddef.h>
 
-    // initialize gui
-    if(gui_setup(128, 64, 4)){
-        fprintf(stderr, "Failed to initialize gui in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        goto _clean_and_exit;
-    }
+;
 
-    // debug scene
-    for(int y = 0; y < 64; ++y){
-        for(int x = 0; x < 128; ++x){
-            gui_set_px(x, y, RGB24(x * 0xff / 128, y * 0xff / 64, 0));
-        }
-    }
-    gui_present();
+#pragma pack(push)
+#pragma pack(1)
+typedef struct rgb24{
+    uint8_t r, g, b;
+} rgb24_t;
+#pragma pack(pop)
+_Static_assert(sizeof(rgb24_t) == 3, "Size of `rgb24_t` is too large... Your compiler adds packing even though it shouldn't");
 
-    // wait til enter is pressed
-    while(getchar() != '\n');
+#define RGB24(r, g, b) ((rgb24_t){r, g, b})
 
-    // clean and exit
-    _clean_and_exit:;
-    gui_free();
-    SDL_Quit();
-    return 0;
-}
+#endif
