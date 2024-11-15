@@ -31,49 +31,58 @@
 | SOFTWARE.                                      |
 \************************************************/
 
+#include "load_png.h"
+
 #include <stdio.h>
 #include <SDL2/SDL.h>
-#include "gui.h"
-#include "load_png.h"
-#include "rgb24.h"
+#include <SDL2/SDL_image.h>
 #include "texture.h"
 
-int main(int argc, char **argv){
-    if(argc < 2){
-        // TODO: update usage message as stuff gets added
-        printf("Too few arguments\n\n");
-        printf("Usage:\n");
-        printf(" %s [.png]\tShows [.png]\n", argv[0]);
+// loads texture from png_path
+int load_png(rgb24_texture_t *texture, const char *png_path){
+    // initialize sdl_image
+    if(IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG){
+        fprintf(stderr, "Failed to initialize SDL_image in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, IMG_GetError());
         return 1;
     }
 
-    // initialize SDL
-    if(SDL_Init(SDL_INIT_VIDEO)){
-        fprintf(stderr, "Failed to initialize SDL in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
-        goto _clean_and_exit;
+    // load unconverted image
+    SDL_Surface *unconverted = IMG_Load(png_path);
+    if(!unconverted){
+        fprintf(stderr, "Failed to load %s in %s, %s, %i:\n%s\n", png_path, __FILE__, __func__, __LINE__, IMG_GetError());
+        IMG_Quit();
+        return 1;
     }
 
-    // load input image
-    rgb24_texture_t input_image;
-    if(load_png(&input_image, argv[1])){
-        goto _clean_and_exit;
+    // convert image to format
+    SDL_Surface *converted = SDL_ConvertSurfaceFormat(unconverted, SDL_PIXELFORMAT_RGB24, 0);
+    if(!converted){
+        fprintf(stderr, "Failed to convert unconverted to create converted in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
+        SDL_FreeSurface(unconverted);
+        IMG_Quit();
+        return 1;
     }
 
-    // initialize gui
-    if(gui_setup(input_image.width, input_image.height, 1)){
-        fprintf(stderr, "Failed to initialize gui in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        goto _clean_and_exit;
+    // create texture
+    if(rgb24_texture_create(texture, converted->w, converted->h)){
+        fprintf(stderr, "Failed to create texture in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        SDL_FreeSurface(converted);
+        SDL_FreeSurface(unconverted);
+        IMG_Quit();
+        return 1;
     }
 
-    // perform demo scene
-    gui_render_texture(0, 0, &input_image);
-    gui_present();
-    while(getchar() != '\n');
+    // load data into texture
+    SDL_LockSurface(converted);
+    rgb24_t *pixels = (rgb24_t *)converted->pixels;
+    for(int i = 0; i < converted->w * converted->h; ++i){
+        texture->data[i] = pixels[i];
+    }
+    SDL_UnlockSurface(converted);
 
-    // clean and exit
-    _clean_and_exit:;
-    gui_free();
-    rgb24_texture_destroy(&input_image);
-    SDL_Quit();
+    // clean and return
+    SDL_FreeSurface(converted);
+    SDL_FreeSurface(unconverted);
+    IMG_Quit();
     return 0;
 }

@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include "rgb24.h"
+#include "texture.h"
 
 // gui state
 static SDL_Window   *gui_window;
@@ -43,9 +44,6 @@ static SDL_Renderer *gui_renderer;
 static SDL_Surface  *gui_surface;
 static int           gui_width,
                      gui_height;
-
-// just some stuff
-static const _Bool __r_before_g = offsetof(rgb24_t, r) < offsetof(rgb24_t, g);
 
 // sets up gui to render an image of size {width, height} and multiply its size by scalar for showing
 int gui_setup(int width, int height, int scalar){
@@ -64,8 +62,7 @@ int gui_setup(int width, int height, int scalar){
     }
 
     // create surface
-    if(__r_before_g) gui_surface = SDL_CreateRGBSurface(0, width, height, 24, 0x0000ff, 0x00ff00, 0xff0000, 0);
-    else             gui_surface = SDL_CreateRGBSurface(0, width, height, 24, 0xff0000, 0x00ff00, 0x0000ff, 0);
+    gui_surface = SDL_CreateRGBSurface(0, width, height, 24, 0x0000ff, 0x00ff00, 0xff0000, 0);
     if(!gui_surface){
         fprintf(stderr, "Failed to create gui_surface in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
         return 1;
@@ -132,21 +129,21 @@ int gui_set_px(int x, int y, rgb24_t color){
 }
 // renders texture to gui's internal buffer at {x, y}
 // returns amount of pixels not rendered
-int gui_render_texture(int x, int y, rgb24_t texture[], int texture_witdh, int texture_height){
+int gui_render_texture(int x, int y, const rgb24_texture_t *texture){
     int outp = 0;
 
     // render texture
-    for(int tex_y = 0; tex_y < texture_height; ++tex_y){
+    for(int tex_y = 0; tex_y < texture->height; ++tex_y){
         if(tex_y + y < 0 || tex_y + y >= gui_height){
-            outp += texture_witdh;
+            outp += texture->width;
             continue;
         }
-        for(int tex_x = 0; tex_x < texture_witdh; ++tex_x){
+        for(int tex_x = 0; tex_x < texture->width; ++tex_x){
             if(tex_x + x < 0 || tex_x + x >= gui_width){
                 ++outp;
                 continue;
             }
-            ((rgb24_t *)gui_surface->pixels)[(tex_x + x) + (tex_y + y) * gui_width] = texture[tex_x + tex_y * texture_witdh];
+            ((rgb24_t *)gui_surface->pixels)[(tex_x + x) + (tex_y + y) * gui_width] = texture->data[tex_x + tex_y * texture->width];
         }
     }
 

@@ -31,23 +31,12 @@
 | SOFTWARE.                                      |
 \************************************************/
 
-#ifndef RBG24_H__
-#define RBG24_H__
+#ifndef LOAD_PNG_H__
+#define LOAD_PNG_H__
 
-#include <stdint.h>
-#include <stddef.h>
+#include "texture.h"
 
-;
-
-#pragma pack(push)
-#pragma pack(1)
-// a color value
-typedef struct rgb24{
-    uint8_t r, g, b;
-} rgb24_t;
-#pragma pack(pop)
-_Static_assert(sizeof(rgb24_t) == 3, "Size of `rgb24_t` is too large... Your compiler adds packing even though it shouldn't");
-
-#define RGB24(r, g, b) ((rgb24_t){r, g, b})
+// loads texture from png_path
+int load_png(rgb24_texture_t *texture, const char *png_path);
 
 #endif

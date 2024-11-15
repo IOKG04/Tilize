@@ -36,6 +36,7 @@
 
 #include <SDL2/SDL_surface.h>
 #include "rgb24.h"
+#include "texture.h"
 
 // sets up gui to render an image of size {width, height} and multiply its size by scalar for showing
 int gui_setup(int width, int height, int scalar);
@@ -49,6 +50,6 @@ int gui_present();
 int gui_set_px(int x, int y, rgb24_t color);
 // renders texture to gui's internal buffer at {x, y}
 // returns amount of pixels not rendered
-int gui_render_texture(int x, int y, rgb24_t texture[], int texture_witdh, int texture_height);
+int gui_render_texture(int x, int y, const rgb24_texture_t *texture);
 
 #endif
