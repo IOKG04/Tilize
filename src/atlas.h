@@ -31,28 +31,35 @@
 | SOFTWARE.                                      |
 \************************************************/
 
+#ifndef ATLAS_H__
+#define ATLAS_H__
+
+#include "rgb24.h"
 #include "texture.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+// a collection of textures
+typedef struct rgb24_atlas{
+    int       tile_width,
+              tile_height,
+              tile_amount_x,
+              tile_amount_y,
+              total_width,   // may differ from tile_width * tile_amount_x if image width isnt evenly divisible by tile_width
+              total_height;  // same as above except vertical now
+    rgb24_t **data;
+} rgb24_atlas_t;
 
-// creates a new texture
-int rgb24_texture_create(rgb24_texture_t *texture, int width, int height){
-    texture->width = width;
-    texture->height = height;
-    texture->data = malloc(width * height * sizeof(*texture->data));
-    if(!texture->data){
-        fprintf(stderr, "Failed to allocate space for texture->data in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        return 1;
-    }
-    return 0;
-}
-// destroyes texture
-void rgb24_texture_destroy(rgb24_texture_t *texture){
-    texture->width = 0;
-    texture->height = 0;
-    if(texture->data){
-        free(texture->data);
-        texture->data = NULL;
-    }
-}
+// creates a new atlas
+// if total_width or total_height == -1, they are automatically added in
+int rgb24_atlas_create(rgb24_atlas_t *atlas, int tile_width, int tile_height, int tile_amount_x, int tile_amount_y, int total_width, int total_height);
+// destroyes atlas
+void rgb24_atlas_destroy(rgb24_atlas_t *atlas);
+
+// converts atlas to a texture
+int rgb24_texture_from_atlas(rgb24_texture_t *restrict texture, const rgb24_atlas_t *restrict atlas);
+// splits texture into atlas of {tile_width, tile_height} sized tiles
+int rgb24_atlas_from_texture(rgb24_atlas_t *restrict atlas, const rgb24_texture_t *restrict texture, int tile_width, int tile_height);
+
+// gets the tile at {x, y} in atlas as a texture
+int rgb24_atlas_get_tile(rgb24_texture_t *restrict tile_texture, const rgb24_atlas_t *restrict atlas, int x, int y);
+
+#endif

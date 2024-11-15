@@ -45,7 +45,7 @@ typedef struct rgb24_texture{
 
 // creates a new texture
 int rgb24_texture_create(rgb24_texture_t *texture, int width, int height);
-// destroyes a texture
+// destroyes texture
 void rgb24_texture_destroy(rgb24_texture_t *texture);
 
 #endif

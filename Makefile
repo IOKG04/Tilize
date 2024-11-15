@@ -4,7 +4,7 @@ CVERSION  := -std=gnu11
 CWARNS    := -Wall
 CC_OPT    := -O0
 CINCLUDES := -I/usr/include/SDL2 -D_REENTRANT
-CLIBS     := -L/usr/lib -lSDL2 -lSDL2_image
+CLIBS     := -lm -L/usr/lib -lSDL2 -lSDL2_image
 CDEFINES  :=
 
 # source, input resources, object and binary directories

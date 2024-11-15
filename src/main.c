@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 #include <SDL2/SDL.h>
+#include "atlas.h"
 #include "gui.h"
 #include "load_png.h"
 #include "rgb24.h"
@@ -53,27 +54,40 @@ int main(int argc, char **argv){
         goto _clean_and_exit;
     }
 
-    // load input image
-    rgb24_texture_t input_image;
-    if(load_png(&input_image, argv[1])){
-        goto _clean_and_exit;
-    }
-
     // initialize gui
-    if(gui_setup(input_image.width, input_image.height, 1)){
+    if(gui_setup(256, 256, 2)){
         fprintf(stderr, "Failed to initialize gui in %s, %s, %i\n", __FILE__, __func__, __LINE__);
         goto _clean_and_exit;
     }
 
+    // load input image
+    rgb24_texture_t input_image = {};
+    if(load_png(&input_image, argv[1])){
+        goto _clean_and_exit;
+    }
+
+    // split up input image
+    rgb24_atlas_t atlas = {};
+    if(rgb24_atlas_from_texture(&atlas, &input_image, 256, 256)){
+        goto _clean_and_exit;
+    }
+
     // perform demo scene
-    gui_render_texture(0, 0, &input_image);
-    gui_present();
-    while(getchar() != '\n');
+    int c = 0;
+    do{
+        rgb24_texture_t ctile = {};
+        rgb24_atlas_get_tile(&ctile, &atlas, c % atlas.tile_amount_x, c / atlas.tile_amount_x);
+        gui_render_texture(0, 0, &ctile);
+        rgb24_texture_destroy(&ctile);
+        gui_present();
+        c = (c + 1) % (atlas.tile_amount_x * atlas.tile_amount_y);
+    }while(getchar() != 'q');
 
     // clean and exit
     _clean_and_exit:;
-    gui_free();
+    rgb24_atlas_destroy(&atlas);
     rgb24_texture_destroy(&input_image);
+    gui_free();
     SDL_Quit();
     return 0;
 }
