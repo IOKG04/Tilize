@@ -14,7 +14,7 @@ OBJ_DIR := obj
 BIN_DIR := bin
 
 # target name
-TARGET_NAME := ifthisisnamedthiswayyouforgottoeditsomelineinthemakefile
+TARGET_NAME := Tilize
 
 # ###
 # CONFIGURATION END
