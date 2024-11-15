@@ -130,3 +130,25 @@ int gui_set_px(int x, int y, rgb24_t color){
 
     return 0;
 }
+// renders texture to gui's internal buffer at {x, y}
+// returns amount of pixels not rendered
+int gui_render_texture(int x, int y, rgb24_t texture[], int texture_witdh, int texture_height){
+    int outp = 0;
+
+    // render texture
+    for(int tex_y = 0; tex_y < texture_height; ++tex_y){
+        if(tex_y + y < 0 || tex_y + y >= gui_height){
+            outp += texture_witdh;
+            continue;
+        }
+        for(int tex_x = 0; tex_x < texture_witdh; ++tex_x){
+            if(tex_x + x < 0 || tex_x + x >= gui_width){
+                ++outp;
+                continue;
+            }
+            ((rgb24_t *)gui_surface->pixels)[(tex_x + x) + (tex_y + y) * gui_width] = texture[tex_x + tex_y * texture_witdh];
+        }
+    }
+
+    return outp;
+}

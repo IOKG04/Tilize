@@ -47,5 +47,8 @@ int gui_present();
 
 // sets pixel at {x, y} of gui's internal buffer to color
 int gui_set_px(int x, int y, rgb24_t color);
+// renders texture to gui's internal buffer at {x, y}
+// returns amount of pixels not rendered
+int gui_render_texture(int x, int y, rgb24_t texture[], int texture_witdh, int texture_height);
 
 #endif
