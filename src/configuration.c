@@ -36,9 +36,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "cJSON.h"
 
+// json names for different things
+// made using macros so no typos can occur
 #define PATTERN_PATH "pattern_path"
+#define TILE_WIDTH   "tile_width"
+#define TILE_HEIGHT  "tile_height"
 #define COLORS       "colors"
 
 // serializes a configuration into json
@@ -53,15 +58,20 @@ int tilize_config_serialize(char **serialized, const tilize_config_t *restrict c
     }
 
     // add pattern_path
-    cJSON *pattern_path = cJSON_CreateString(config->pattern_path);
-    if(!pattern_path){
-        fprintf(stderr, "Failed to create pattern_path in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+    if(!cJSON_AddStringToObject(root, PATTERN_PATH, config->pattern_path)){
+        fprintf(stderr, "Failed to add pattern_path to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
         retcode = 1;
         goto _clean_and_exit;
     }
-    if(!cJSON_AddItemToObject(root, PATTERN_PATH, pattern_path)){
-        fprintf(stderr, "Failed to add pattern_path to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        cJSON_Delete(pattern_path);
+
+    // add tile_width and tile_height
+    if(!cJSON_AddNumberToObject(root, TILE_WIDTH, config->tile_width)){
+        fprintf(stderr, "Failed to add tile_width to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        retcode = 1;
+        goto _clean_and_exit;
+    }
+    if(!cJSON_AddNumberToObject(root, TILE_HEIGHT, config->tile_height)){
+        fprintf(stderr, "Failed to add tile_height to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
         retcode = 1;
         goto _clean_and_exit;
     }
@@ -69,15 +79,9 @@ int tilize_config_serialize(char **serialized, const tilize_config_t *restrict c
     // num_colors implied from size of colors
 
     // add colors
-    cJSON *colors = cJSON_CreateArray();
+    cJSON *colors = cJSON_AddArrayToObject(root, COLORS);
     if(!colors){
-        fprintf(stderr, "Failed to create colors in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        retcode = 1;
-        goto _clean_and_exit;
-    }
-    if(!cJSON_AddItemToObject(root, COLORS, colors)){
         fprintf(stderr, "Failed to add colors to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        cJSON_Delete(colors);
         retcode = 1;
         goto _clean_and_exit;
     }
@@ -115,6 +119,7 @@ int tilize_config_serialize(char **serialized, const tilize_config_t *restrict c
 // deserializes a configuration from json
 int tilize_config_deserialize(tilize_config_t *restrict config, const char *restrict serialized){
     int retcode = 0;
+    double temp;
 
     // parse serialized
     cJSON *root = cJSON_Parse(serialized);
@@ -143,6 +148,34 @@ int tilize_config_deserialize(tilize_config_t *restrict config, const char *rest
         goto _clean_and_exit;
     }
     strcpy(config->pattern_path, whycantgetstringvaluejustreturnacopyonitsown);
+
+    // get tile_width and tile_height
+    cJSON *tile_width = cJSON_GetObjectItem(root, TILE_WIDTH);
+    if(!tile_width){
+        fprintf(stderr, "Failed to get tile_width from root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        retcode = 1;
+        goto _clean_and_exit;
+    }
+    temp = cJSON_GetNumberValue(tile_width);
+    if(isnan(temp)){
+        fprintf(stderr, "Failed to get tile_width from tile_width in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        retcode = 1;
+        goto _clean_and_exit;
+    }
+    config->tile_width = temp;
+    cJSON *tile_height = cJSON_GetObjectItem(root, TILE_HEIGHT);
+    if(!tile_height){
+        fprintf(stderr, "Failed to get tile_height from root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        retcode = 1;
+        goto _clean_and_exit;
+    }
+    temp = cJSON_GetNumberValue(tile_height);
+    if(isnan(temp)){
+        fprintf(stderr, "Failed to get tile_height from tile_height in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        retcode = 1;
+        goto _clean_and_exit;
+    }
+    config->tile_height = temp;
 
     // get colors and num_colors
     cJSON *colors = cJSON_GetObjectItem(root, COLORS);

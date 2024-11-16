@@ -39,6 +39,8 @@
 // a configuration for Tilize
 typedef struct tilize_config{
     char    *pattern_path; // relative to the path of the configuration itself
+    int      tile_width,
+             tile_height;
     int      num_colors;
     rgb24_t *colors;
 } tilize_config_t;
