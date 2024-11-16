@@ -9,3 +9,7 @@ split it into n by m rectangles, then choose which of a given number of patterns
 preserves that rectangle best, and then replace it with that, resulting in an image made entirely of tiles.
 
 For now though, that isn't the case yet. I need to build the software first.
+
+## Credit
+
+As of now, this project uses [cJSON](https://github.com/DaveGamble/cJSON) by [DaveGamble](https://github.com/DaveGamble) and others, distributed under the [MIT License](https://github.com/DaveGamble/cJSON/blob/master/LICENSE).

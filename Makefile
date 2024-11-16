@@ -39,6 +39,25 @@ RCS_OUTP := $(patsubst $(RCS_DIR)/%,$(RCS_BIN_DIR)/%,$(RCS_INP))
 .PHONY: all
 all: $(TARGET) $(RCS_OUTP)
 
+# cJSON
+CJSON_C     := $(SRC_DIR)/cJSON.c
+CJSON_C_URL := https://raw.githubusercontent.com/DaveGamble/cJSON/refs/heads/master/cJSON.c
+ifeq ($(filter $(CJSON_C),$(SRCS)),)
+	SRCS += $(CJSON_C)
+	OBJS += $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(CJSON_C))
+endif
+CJSON_H     := $(SRC_DIR)/cJSON.h
+CJSON_H_URL := https://raw.githubusercontent.com/DaveGamble/cJSON/refs/heads/master/cJSON.h
+ifeq ($(filter $(CJSON_H),$(HEADERS)),)
+	HEADERS += $(CJSON_H)
+endif
+$(CJSON_C):
+	@mkdir -p $(dir $(CJSON_C))
+	curl -s -o $@ $(CJSON_C_URL)
+$(CJSON_H):
+	@mkdir -p $(dir $(CJSON_H))
+	curl -s -o $@ $(CJSON_H_URL)
+
 # compile and link program
 $(TARGET): $(OBJS)
 	@mkdir -p $(dir $@)
@@ -56,3 +75,6 @@ $(RCS_OUTP): $(RCS_BIN_DIR)/%: $(RCS_DIR)/%
 .PHONY: clean
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
+.PHONY: cleanall
+cleanall: clean
+	rm -f $(CJSON_C) $(CJSON_H)
