@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <SDL2/SDL.h>
+#include "application.h"
 #include "atlas.h"
 #include "gui.h"
 #include "load_png.h"
@@ -43,12 +44,22 @@
 
 #define TILE_SIZE 8
 
+static const tilize_config_t default_tilize_config = {"round_24x24.png", 24, 24, 8, (rgb24_t[8]){RGB24(0x00,0x00,0x00),
+                                                                                                 RGB24(0x00,0x00,0xff),
+                                                                                                 RGB24(0x00,0xff,0x00),
+                                                                                                 RGB24(0x00,0xff,0xff),
+                                                                                                 RGB24(0xff,0x00,0x00),
+                                                                                                 RGB24(0xff,0x00,0xff),
+                                                                                                 RGB24(0xff,0xff,0x00),
+                                                                                                 RGB24(0xff,0xff,0xff)}};
+static const flag_config_t   default_flag_config   = {"resources/exconfig.json"};
+
 int main(int argc, char **argv){
     if(argc < 2){
         // TODO: update usage message as stuff gets added
         printf("Too few arguments\n\n");
         printf("Usage:\n");
-        printf(" %s [.png]\tShows [.png]\n", argv[0]);
+        printf(" %s [.png]\tProcesses [.png]\n", argv[0]);
         return 1;
     }
 
@@ -58,11 +69,9 @@ int main(int argc, char **argv){
         goto _clean_and_exit;
     }
 
-    // load and split input image
+    // load input image
     rgb24_texture_t input_image = {};
     if(load_png(&input_image, argv[1])) goto _clean_and_exit;
-    rgb24_atlas_t input_atlas = {};
-    if(rgb24_atlas_from_texture(&input_atlas, &input_image, TILE_SIZE, TILE_SIZE)) goto _clean_and_exit;
 
     // initialize gui
     if(gui_setup(input_image.width, input_image.height, 1)){
@@ -70,63 +79,27 @@ int main(int argc, char **argv){
         goto _clean_and_exit;
     }
 
-    // load tiles
-    rgb24_texture_t tiles_texture = {};
-    if(load_png(&tiles_texture, "resources/extiles_8x8.png")) goto _clean_and_exit;
-    rgb24_atlas_t tiles_atlas = {};
-    if(rgb24_atlas_from_texture(&tiles_atlas, &tiles_texture, TILE_SIZE, TILE_SIZE)) goto _clean_and_exit;
-    rgb24_texture_t *tiles = calloc(tiles_atlas.tile_amount_x * tiles_atlas.tile_amount_y, sizeof(*tiles));
-    if(!tiles) goto _clean_and_exit;
-    for(int i = 0; i < tiles_atlas.tile_amount_x * tiles_atlas.tile_amount_y; ++i){
-        if(rgb24_atlas_get_tile(&tiles[i], &tiles_atlas, i % tiles_atlas.tile_amount_x, i / tiles_atlas.tile_amount_x)) goto _clean_and_exit;
-    }
-
     // do the thing
-    Uint64 thing_start = SDL_GetTicks64();
-    gui_render_texture(0, 0, &input_image);
-    gui_present();
-    for(int i = 0; i < input_atlas.tile_amount_x * input_atlas.tile_amount_y; ++i){
-        const int inp_x = i % input_atlas.tile_amount_x,
-                  inp_y = i / input_atlas.tile_amount_x;
-        rgb24_texture_t current_tile = {};
-        if(rgb24_atlas_get_tile(&current_tile, &input_atlas, inp_x, inp_y)) goto _clean_and_exit;
-        int min_diff_index = 0,
-            min_diff       = INT_MAX;
-        for(int j = 0; j < tiles_atlas.tile_amount_x * tiles_atlas.tile_amount_y; ++j){
-            int diff = 0;
-            for(int k = 0; k < TILE_SIZE * TILE_SIZE; ++k){
-                diff += abs(current_tile.data[k].r - (int)tiles[j].data[k].r);
-                diff += abs(current_tile.data[k].g - (int)tiles[j].data[k].g);
-                diff += abs(current_tile.data[k].b - (int)tiles[j].data[k].b);
-            }
-            if(diff < min_diff){
-                min_diff = diff;
-                min_diff_index = j;
-            }
-        }
-        rgb24_texture_destroy(&current_tile);
-        gui_render_texture(inp_x * TILE_SIZE, inp_y * TILE_SIZE, &tiles[min_diff_index]);
-        gui_present();
+    if(application_setup(&default_tilize_config, &default_flag_config)){
+        fprintf(stderr, "Failed to setup application in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        goto _clean_and_exit;
     }
-    Uint64 thing_end = SDL_GetTicks64();
-    printf("That took %llu ms to complete\n", (long long unsigned)(thing_end - thing_start));
+    Uint64 process_start = SDL_GetTicks64();
+    if(application_process(&input_image)){
+        fprintf(stderr, "Failed to process input_image in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        goto _clean_and_exit;
+    }
+    Uint64 process_end   = SDL_GetTicks64();
+    printf("Finished in %llu ms\n", (long long unsigned)(process_end - process_start));
+    application_free();
 
     // wait to exit
     while(getchar() != '\n');
 
     // clean and exit
     _clean_and_exit:;
-    if(tiles){
-        for(int i = 0; i < tiles_atlas.tile_amount_x * tiles_atlas.tile_amount_y; ++i){
-            rgb24_texture_destroy(&tiles[i]);
-        }
-        free(tiles);
-    }
-    rgb24_atlas_destroy(&tiles_atlas);
-    rgb24_texture_destroy(&tiles_texture);
-    rgb24_atlas_destroy(&input_atlas);
-    rgb24_texture_destroy(&input_image);
     gui_free();
+    rgb24_texture_destroy(&input_image);
     SDL_Quit();
     return 0;
 }

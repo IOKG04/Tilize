@@ -31,35 +31,18 @@
 | SOFTWARE.                                      |
 \************************************************/
 
-#ifndef ATLAS_H__
-#define ATLAS_H__
+#ifndef APPLICATION_H__
+#define APPLICATION_H__
 
-#include "rgb24.h"
+#include "configuration.h"
 #include "texture.h"
 
-// a collection of textures
-typedef struct rgb24_atlas_t{
-    int       tile_width,
-              tile_height,
-              tile_amount_x,
-              tile_amount_y,
-              total_width,   // may differ from tile_width * tile_amount_x if image width isnt evenly divisible by tile_width
-              total_height;  // same as above except vertical now
-    rgb24_t **data;
-} rgb24_atlas_t;
+// sets up application with the provided configs
+int application_setup(const tilize_config_t *restrict tilize_config, const flag_config_t *restrict flag_config);
+// frees everything application uses
+void application_free();
 
-// creates a new atlas
-// if total_width or total_height == -1, they are automatically added in
-int rgb24_atlas_create(rgb24_atlas_t *atlas, int tile_width, int tile_height, int tile_amount_x, int tile_amount_y, int total_width, int total_height);
-// destroyes atlas
-void rgb24_atlas_destroy(rgb24_atlas_t *atlas);
-
-// converts atlas to a texture
-int rgb24_texture_from_atlas(rgb24_texture_t *restrict texture, const rgb24_atlas_t *restrict atlas);
-// splits texture into atlas of {tile_width, tile_height} sized tiles
-int rgb24_atlas_from_texture(rgb24_atlas_t *restrict atlas, const rgb24_texture_t *restrict texture, int tile_width, int tile_height);
-
-// gets the tile at {x, y} in atlas as a texture
-int rgb24_atlas_get_tile(rgb24_texture_t *restrict tile_texture, const rgb24_atlas_t *restrict atlas, int x, int y);
+// processes input
+int application_process(const rgb24_texture_t *restrict input_texture);
 
 #endif

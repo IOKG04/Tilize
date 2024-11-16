@@ -37,7 +37,7 @@
 #include "rgb24.h"
 
 // a texture composed of rgb24s
-typedef struct rgb24_texture{
+typedef struct rgb24_texture_t{
     int      width, 
              height;
     rgb24_t *data;

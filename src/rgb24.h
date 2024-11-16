@@ -42,7 +42,7 @@
 #pragma pack(push)
 #pragma pack(1)
 // a color value
-typedef struct rgb24{
+typedef struct rgb24_t{
     uint8_t r, g, b;
 } rgb24_t;
 #pragma pack(pop)

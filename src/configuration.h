@@ -37,13 +37,18 @@
 #include "rgb24.h"
 
 // a configuration for Tilize
-typedef struct tilize_config{
+typedef struct tilize_config_t{
     char    *pattern_path; // relative to the path of the configuration itself
     int      tile_width,
              tile_height;
     int      num_colors;
     rgb24_t *colors;
 } tilize_config_t;
+
+// a configuration generated at runtime as a result of flags
+typedef struct flag_config_t{
+    char *config_path; // path of the tilize config used
+}flag_config_t;
 
 // serializes a configuration into json
 int tilize_config_serialize(char **serialized, const tilize_config_t *restrict config);
