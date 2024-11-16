@@ -56,3 +56,27 @@ void rgb24_texture_destroy(rgb24_texture_t *texture){
         texture->data = NULL;
     }
 }
+
+// replaces texture with a new one of size {new_width, new_height}, such that the original is in the top left and everything else gets filled with black
+int rgb24_texture_resize(rgb24_texture_t *texture, int new_width, int new_height){
+    rgb24_texture_t prev = *texture;
+
+    // create new texture
+    if(rgb24_texture_create(texture, new_width, new_height)){
+        fprintf(stderr, "Failed to create new texture in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        *texture = prev;
+        return 1;
+    }
+
+    // copy data
+    for(int y = 0; y < new_height; ++y){
+        for(int x = 0; x < new_width; ++x){
+            if(x < prev.width && y < prev.height) texture->data[x + y * new_width] = prev.data[x + y * prev.width];
+            else                                  texture->data[x + y * new_width] = RGB24(0,0,0);
+        }
+    }
+
+    // clean and return
+    rgb24_texture_destroy(&prev);
+    return 0;
+}

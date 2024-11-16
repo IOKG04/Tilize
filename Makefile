@@ -1,6 +1,6 @@
 # c compiler configuration
 CC        := gcc
-CVERSION  := -std=gnu11
+CVERSION  := -std=c11
 CWARNS    := -Wall
 CC_OPT    := -O0
 CINCLUDES := -I/usr/include/SDL2 -D_REENTRANT
@@ -70,6 +70,10 @@ $(OBJS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
 $(RCS_OUTP): $(RCS_BIN_DIR)/%: $(RCS_DIR)/%
 	@mkdir -p $(dir $@)
 	cp $< $@
+
+# downloads everything necessary for compiling
+.PHONY: init
+init: $(CJSON_H) $(CJSON_C)
 
 # clean project build
 .PHONY: clean

@@ -34,6 +34,7 @@
 #include "load_png.h"
 
 #include <stdio.h>
+#include <stdint.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "texture.h"
@@ -55,7 +56,7 @@ int load_png(rgb24_texture_t *texture, const char *png_path){
     }
 
     // convert image to format
-    SDL_Surface *converted = SDL_ConvertSurfaceFormat(unconverted, SDL_PIXELFORMAT_RGB24, 0);
+    SDL_Surface *converted = SDL_ConvertSurfaceFormat(unconverted, SDL_PIXELFORMAT_RGBA8888, 0);
     if(!converted){
         fprintf(stderr, "Failed to convert unconverted to create converted in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
         SDL_FreeSurface(unconverted);
@@ -74,9 +75,11 @@ int load_png(rgb24_texture_t *texture, const char *png_path){
 
     // load data into texture
     SDL_LockSurface(converted);
-    rgb24_t *pixels = (rgb24_t *)converted->pixels;
+    uint32_t *pixels = (uint32_t *)converted->pixels;
     for(int i = 0; i < converted->w * converted->h; ++i){
-        texture->data[i] = pixels[i];
+        texture->data[i].r = (pixels[i] >> 24) & 0xff;
+        texture->data[i].g = (pixels[i] >> 16) & 0xff;
+        texture->data[i].b = (pixels[i] >>  8) & 0xff;
     }
     SDL_UnlockSurface(converted);
 

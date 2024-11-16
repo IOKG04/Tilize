@@ -42,16 +42,14 @@
 #include "rgb24.h"
 #include "texture.h"
 
-#define TILE_SIZE 8
-
-static const tilize_config_t default_tilize_config = {"round_24x24.png", 24, 24, 8, (rgb24_t[8]){RGB24(0x00,0x00,0x00),
-                                                                                                 RGB24(0x00,0x00,0xff),
-                                                                                                 RGB24(0x00,0xff,0x00),
-                                                                                                 RGB24(0x00,0xff,0xff),
-                                                                                                 RGB24(0xff,0x00,0x00),
-                                                                                                 RGB24(0xff,0x00,0xff),
-                                                                                                 RGB24(0xff,0xff,0x00),
-                                                                                                 RGB24(0xff,0xff,0xff)}};
+static const tilize_config_t default_tilize_config = {"extiles_24x24.png", 24, 24, 8, (rgb24_t[8]){RGB24(0x00,0x00,0x00),
+                                                                                                   RGB24(0x00,0x00,0xff),
+                                                                                                   RGB24(0x00,0xff,0x00),
+                                                                                                   RGB24(0x00,0xff,0xff),
+                                                                                                   RGB24(0xff,0x00,0x00),
+                                                                                                   RGB24(0xff,0x00,0xff),
+                                                                                                   RGB24(0xff,0xff,0x00),
+                                                                                                   RGB24(0xff,0xff,0xff)}};
 static const flag_config_t   default_flag_config   = {"resources/exconfig.json"};
 
 int main(int argc, char **argv){
@@ -71,7 +69,21 @@ int main(int argc, char **argv){
 
     // load input image
     rgb24_texture_t input_image = {};
-    if(load_png(&input_image, argv[1])) goto _clean_and_exit;
+    if(load_png(&input_image, argv[1])){
+        fprintf(stderr, "Failed to load input_image in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        goto _clean_and_exit;
+    }
+
+    // resize input image so it fits
+    const int ideal_width  = (int)ceil(input_image.width / (double)default_tilize_config.tile_width) * default_tilize_config.tile_width,
+              ideal_height = (int)ceil(input_image.height / (double)default_tilize_config.tile_height) * default_tilize_config.tile_height;
+    if(input_image.width != ideal_width || input_image.height != ideal_height){
+        printf("Resizing input_image from {%i, %i} to {%i, %i}\n", input_image.width, input_image.height, ideal_width, ideal_height);
+        if(rgb24_texture_resize(&input_image, ideal_width, ideal_height)){
+            fprintf(stderr, "Failed to resize input_image in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            goto _clean_and_exit;
+        }
+    }
 
     // initialize gui
     if(gui_setup(input_image.width, input_image.height, 1)){

@@ -67,6 +67,7 @@ int gui_setup(int width, int height, int scalar){
         fprintf(stderr, "Failed to create gui_surface in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
         return 1;
     }
+    SDL_LockSurface(gui_surface);
 
     // set gui_width and gui_height
     gui_width = width;
@@ -85,13 +86,17 @@ int gui_setup(int width, int height, int scalar){
 }
 // frees everything gui uses
 void gui_free(){
-    if(gui_surface) SDL_FreeSurface(gui_surface);
+    if(gui_surface){
+        SDL_UnlockSurface(gui_surface);
+        SDL_FreeSurface(gui_surface);
+    }
     if(gui_renderer) SDL_DestroyRenderer(gui_renderer);
     if(gui_window) SDL_DestroyWindow(gui_window);
 }
 
 // renders current visuals to the window
 int gui_present(){
+    SDL_UnlockSurface(gui_surface);
     // create texture to be rendered
     SDL_Texture *gui_texture = SDL_CreateTextureFromSurface(gui_renderer, gui_surface);
     if(!gui_texture){
@@ -103,6 +108,7 @@ int gui_present(){
     if(SDL_RenderCopy(gui_renderer, gui_texture, NULL, NULL)){
         fprintf(stderr, "Failed to render gui_texture to gui_renderer in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
         SDL_DestroyTexture(gui_texture);
+        SDL_LockSurface(gui_surface);
         return 1;
     }
 
@@ -111,6 +117,7 @@ int gui_present(){
 
     // cleanup and return
     SDL_DestroyTexture(gui_texture);
+    SDL_LockSurface(gui_surface);
     return 0;
 }
 

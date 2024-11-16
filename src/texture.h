@@ -48,4 +48,7 @@ int rgb24_texture_create(rgb24_texture_t *texture, int width, int height);
 // destroyes texture
 void rgb24_texture_destroy(rgb24_texture_t *texture);
 
+// replaces texture with a new one of size {new_width, new_height}, such that the original is in the top left and everything else gets filled with black
+int rgb24_texture_resize(rgb24_texture_t *texture, int new_width, int new_height);
+
 #endif
