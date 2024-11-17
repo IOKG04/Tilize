@@ -34,6 +34,7 @@
 #include "gui.h"
 
 #include <stdio.h>
+#include <stdint.h>
 #include <SDL2/SDL.h>
 #include "rgb24.h"
 #include "texture.h"
@@ -65,7 +66,7 @@ int gui_setup(int width, int height, int scalar){
     }
 
     // create surface
-    gui_surface = SDL_CreateRGBSurface(0, width, height, 24, 0x0000ff, 0x00ff00, 0xff0000, 0);
+    gui_surface = SDL_CreateRGBSurface(0, width, height, 32, 0xff0000, 0x00ff00, 0x0000ff, 0);
     if(!gui_surface){
         fprintf(stderr, "Failed to create gui_surface in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
         return 1;
@@ -86,9 +87,9 @@ int gui_setup(int width, int height, int scalar){
     }
 
     // present initial scene (black screen)
-    rgb24_t *pixels = (rgb24_t *)gui_surface->pixels;
+    uint32_t *pixels = (uint32_t *)gui_surface->pixels;
     for(int i = 0; i < width * height; ++i){
-        pixels[i] = RGB24(0, 0, 0);
+        pixels[i] = 0;
     }
     if(gui_present()){
         fprintf(stderr, "Failed to render black scene in %s, %s, %i\n", __FILE__, __func__, __LINE__);
@@ -182,7 +183,9 @@ int gui_set_px(int x, int y, rgb24_t color){
 
     // set pixel
     SDL_LockSurface(gui_surface);
-    ((rgb24_t *)gui_surface->pixels)[x + y * gui_width] = color;
+    ((uint32_t *)gui_surface->pixels)[x + y * gui_width] = (color.r << 16) |
+                                                           (color.g <<  8) |
+                                                           (color.b <<  0);
     SDL_UnlockSurface(gui_surface);
 
     if(mtx_unlock(&render_mtx) != thrd_success){
@@ -213,7 +216,10 @@ int gui_render_texture(int x, int y, const rgb24_texture_t *texture){
                 ++outp;
                 continue;
             }
-            ((rgb24_t *)gui_surface->pixels)[(tex_x + x) + (tex_y + y) * gui_width] = texture->data[tex_x + tex_y * texture->width];
+            const rgb24_t texture_px = texture->data[tex_x + tex_y * texture->width];
+            ((uint32_t *)gui_surface->pixels)[(tex_x + x) + (tex_y + y) * gui_width] = (texture_px.r << 16) |
+                                                                                       (texture_px.g <<  8) |
+                                                                                       (texture_px.b <<  0);
         }
     }
     SDL_UnlockSurface(gui_surface);

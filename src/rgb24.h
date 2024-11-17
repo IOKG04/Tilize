@@ -39,14 +39,10 @@
 
 ;
 
-#pragma pack(push)
-#pragma pack(1)
 // a color value
 typedef struct rgb24_t{
     uint8_t r, g, b;
 } rgb24_t;
-#pragma pack(pop)
-_Static_assert(sizeof(rgb24_t) == 3, "Size of `rgb24_t` is too large... Your compiler adds packing even though it shouldn't");
 
 #define RGB24(r, g, b) ((rgb24_t){r, g, b})
 

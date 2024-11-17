@@ -106,18 +106,6 @@ int main(int argc, char **argv){
         goto _clean_and_exit;
     }
 
-    // resize input image so it fits
-    const int ideal_width  = (int)ceil(input_image.width / (double)default_tilize_config.tile_width) * default_tilize_config.tile_width,
-              ideal_height = (int)ceil(input_image.height / (double)default_tilize_config.tile_height) * default_tilize_config.tile_height;
-    if(input_image.width != ideal_width && input_image.height != ideal_height){
-        fprintf(stderr, "Resizing input_image from {%i, %i} to {%i, %i}", input_image.width, input_image.height, ideal_width, ideal_height);
-        if(rgb24_texture_resize(&input_image, ideal_width, ideal_height)){
-            fprintf(stderr, "Failed to resize input_image in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-            goto _clean_and_exit;
-        }
-        fprintf(stderr, " / Done\n");
-    }
-
     // initialize gui
     if(gui_setup(input_image.width, input_image.height, 1)){
         fprintf(stderr, "Failed to initialize gui in %s, %s, %i\n", __FILE__, __func__, __LINE__);
