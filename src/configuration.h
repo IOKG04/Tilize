@@ -43,6 +43,8 @@ typedef struct tilize_config_t{
              tile_height;
     int      num_colors;
     rgb24_t *colors;
+    int      bckg_color,   // if == -1, all colors can be used
+             forg_color;   // same as above
 } tilize_config_t;
 
 // a configuration generated at runtime as a result of flags

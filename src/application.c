@@ -49,6 +49,10 @@ static int            num_threads;
 static int            num_colors;
 static rgb24_t       *colors;
 static rgb24_atlas_t  pattern_atlas;
+static int            col1_min,
+                      col1_max,
+                      col2_min,
+                      col2_max;
 static int            __ct_i;
 static mtx_t          ct_i_mtx;
 
@@ -104,6 +108,24 @@ int application_setup(const tilize_config_t *restrict tilize_config, const flag_
     }
     for(int i = 0; i < num_colors; ++i){
         colors[i] = tilize_config->colors[i];
+    }
+
+    // get bckg_color and forg_color
+    if(tilize_config->bckg_color != -1){
+        col2_min = tilize_config->bckg_color;
+        col2_max = tilize_config->bckg_color + 1;
+    }
+    else{
+        col2_min = 0;
+        col2_max = num_colors;
+    }
+    if(tilize_config->forg_color != -1){
+        col1_min = tilize_config->forg_color;
+        col1_max = tilize_config->forg_color + 1;
+    }
+    else{
+        col1_min = 0;
+        col1_max = num_colors;
     }
 
     // misc
@@ -194,8 +216,8 @@ static int process_loop(void *input_atlas_void){
         int lowest_pt, lowest_col1, lowest_col2;
         for(int pt_i = 0; pt_i < pattern_atlas.tile_amount_x * pattern_atlas.tile_amount_y; ++pt_i){
             const rgb24_t *pattern_tile = pattern_atlas.data[pt_i];
-            for(int col1 = 0; col1 < num_colors; ++col1){
-                for(int col2 = 0; col2 < num_colors; ++col2){
+            for(int col1 = col1_min; col1 < col1_max; ++col1){
+                for(int col2 = col2_min; col2 < col2_max; ++col2){
                     unsigned long difference = 0;
                     for(int i = 0; i < pattern_atlas.tile_width * pattern_atlas.tile_height; ++i){
                         rgb24_t col_cmp;

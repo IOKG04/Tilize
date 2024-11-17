@@ -42,7 +42,11 @@
 #include "rgb24.h"
 #include "texture.h"
 
-static const tilize_config_t default_tilize_config = {"round_6x6.png", 6, 6, 27,
+static const tilize_config_t default_tilize_config = {
+    "round_6x6.png",
+    6,
+    6,
+    27,
     (rgb24_t[27]){
         RGB24(0x00,0x00,0x00),
         RGB24(0x00,0x00,0x80),
@@ -71,9 +75,14 @@ static const tilize_config_t default_tilize_config = {"round_6x6.png", 6, 6, 27,
         RGB24(0xff,0xff,0x00),
         RGB24(0xff,0xff,0x80),
         RGB24(0xff,0xff,0xff),
-    }
+    },
+    0,
+    -1
 };
-static const flag_config_t   default_flag_config   = {16, "resources/exconfig.json"};
+static const flag_config_t default_flag_config = {
+    16,
+    "resources/exconfig.json"
+};
 
 int main(int argc, char **argv){
     if(argc < 2){

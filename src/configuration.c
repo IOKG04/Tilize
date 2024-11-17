@@ -45,6 +45,8 @@
 #define TILE_WIDTH   "tile_width"
 #define TILE_HEIGHT  "tile_height"
 #define COLORS       "colors"
+#define BCKG_COLOR   "background_color"
+#define FORG_COLOR   "foreground_color"
 
 // serializes a configuration into json
 int tilize_config_serialize(char **serialized, const tilize_config_t *restrict config){
@@ -98,6 +100,24 @@ int tilize_config_serialize(char **serialized, const tilize_config_t *restrict c
         if(!cJSON_AddItemToArray(colors, ccolor)){
             fprintf(stderr, "Failed to add ccolor %i to colors in %s, %s, %i\n", i, __FILE__, __func__, __LINE__);
             cJSON_Delete(ccolor);
+            retcode = 1;
+            goto _clean_and_exit;
+        }
+    }
+
+    // add bckg_color and forg_color if != -1
+    if(config->bckg_color != -1){
+        cJSON *bckg_color = cJSON_AddNumberToObject(root, BCKG_COLOR, config->bckg_color);
+        if(!bckg_color){
+            fprintf(stderr, "Failed to add bckg_color to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            retcode = 1;
+            goto _clean_and_exit;
+        }
+    }
+    if(config->forg_color != -1){
+        cJSON *forg_color = cJSON_AddNumberToObject(root, FORG_COLOR, config->forg_color);
+        if(!forg_color){
+            fprintf(stderr, "Failed to add forg_color to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
             retcode = 1;
             goto _clean_and_exit;
         }
@@ -206,6 +226,14 @@ int tilize_config_deserialize(tilize_config_t *restrict config, const char *rest
         config->colors[i].b = (color >>  0) & 0xff;
         ++i;
     }
+
+    // get bckg_color and forg_color if they exist
+    cJSON *bckg_color = cJSON_GetObjectItem(root, BCKG_COLOR);
+    if(bckg_color) config->bckg_color = (int)cJSON_GetNumberValue(bckg_color);
+    else           config->bckg_color = -1;
+    cJSON *forg_color = cJSON_GetObjectItem(root, FORG_COLOR);
+    if(forg_color) config->forg_color = (int)cJSON_GetNumberValue(forg_color);
+    else           config->forg_color = -1;
 
     // clean and exit
     _clean_and_exit:;
