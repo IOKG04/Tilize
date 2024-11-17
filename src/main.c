@@ -42,14 +42,37 @@
 #include "rgb24.h"
 #include "texture.h"
 
-static const tilize_config_t default_tilize_config = {"extiles_24x24.png", 24, 24, 8, (rgb24_t[8]){RGB24(0x00,0x00,0x00),
-                                                                                                   RGB24(0x00,0x00,0xff),
-                                                                                                   RGB24(0x00,0xff,0x00),
-                                                                                                   RGB24(0x00,0xff,0xff),
-                                                                                                   RGB24(0xff,0x00,0x00),
-                                                                                                   RGB24(0xff,0x00,0xff),
-                                                                                                   RGB24(0xff,0xff,0x00),
-                                                                                                   RGB24(0xff,0xff,0xff)}};
+static const tilize_config_t default_tilize_config = {"round_6x6.png", 6, 6, 27,
+    (rgb24_t[27]){
+        RGB24(0x00,0x00,0x00),
+        RGB24(0x00,0x00,0x80),
+        RGB24(0x00,0x00,0xff),
+        RGB24(0x00,0x80,0x00),
+        RGB24(0x00,0x80,0x80),
+        RGB24(0x00,0x80,0xff),
+        RGB24(0x00,0xff,0x00),
+        RGB24(0x00,0xff,0x80),
+        RGB24(0x00,0xff,0xff),
+        RGB24(0x80,0x00,0x00),
+        RGB24(0x80,0x00,0x80),
+        RGB24(0x80,0x00,0xff),
+        RGB24(0x80,0x80,0x00),
+        RGB24(0x80,0x80,0x80),
+        RGB24(0x80,0x80,0xff),
+        RGB24(0x80,0xff,0x00),
+        RGB24(0x80,0xff,0x80),
+        RGB24(0x80,0xff,0xff),
+        RGB24(0xff,0x00,0x00),
+        RGB24(0xff,0x00,0x80),
+        RGB24(0xff,0x00,0xff),
+        RGB24(0xff,0x80,0x00),
+        RGB24(0xff,0x80,0x80),
+        RGB24(0xff,0x80,0xff),
+        RGB24(0xff,0xff,0x00),
+        RGB24(0xff,0xff,0x80),
+        RGB24(0xff,0xff,0xff),
+    }
+};
 static const flag_config_t   default_flag_config   = {16, "resources/exconfig.json"};
 
 int main(int argc, char **argv){
@@ -77,7 +100,7 @@ int main(int argc, char **argv){
     // resize input image so it fits
     const int ideal_width  = (int)ceil(input_image.width / (double)default_tilize_config.tile_width) * default_tilize_config.tile_width,
               ideal_height = (int)ceil(input_image.height / (double)default_tilize_config.tile_height) * default_tilize_config.tile_height;
-    if(input_image.width != ideal_width || input_image.height != ideal_height){
+    if(input_image.width != ideal_width && input_image.height != ideal_height){
         fprintf(stderr, "Resizing input_image from {%i, %i} to {%i, %i}", input_image.width, input_image.height, ideal_width, ideal_height);
         if(rgb24_texture_resize(&input_image, ideal_width, ideal_height)){
             fprintf(stderr, "Failed to resize input_image in %s, %s, %i\n", __FILE__, __func__, __LINE__);

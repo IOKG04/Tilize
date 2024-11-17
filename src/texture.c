@@ -72,7 +72,9 @@ int rgb24_texture_resize(rgb24_texture_t *texture, int new_width, int new_height
     for(int y = 0; y < new_height; ++y){
         for(int x = 0; x < new_width; ++x){
             if(x < prev.width && y < prev.height) texture->data[x + y * new_width] = prev.data[x + y * prev.width];
-            else                                  texture->data[x + y * new_width] = RGB24(0,0,0);
+            else if(y < prev.height)              texture->data[x + y * new_width] = prev.data[(prev.width - 1) + y * prev.width];
+            else if(x < prev.width)               texture->data[x + y * new_width] = prev.data[x + (prev.height - 1) * prev.width];
+            else                                  texture->data[x + y * new_width] = prev.data[(prev.width - 1) + (prev.height - 1) * prev.width];
         }
     }
 

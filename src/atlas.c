@@ -126,10 +126,13 @@ int rgb24_atlas_from_texture(rgb24_atlas_t *restrict atlas, const rgb24_texture_
         for(int x1 = 0; x1 < tile_amount_x; ++x1){
             const int tile_x = x1 * tile_width;
             for(int y2 = 0; y2 < tile_height; ++y2){
-                if(y2 + tile_y < 0 || y2 + tile_y >= texture->height) continue;
+                const int y = y2 + tile_y;
                 for(int x2 = 0; x2 < tile_width; ++x2){
-                    if(x2 + tile_x < 0 || x2 + tile_x >= texture->width) continue;
-                    atlas->data[x1 + y1 * atlas->tile_amount_x][x2 + y2 * atlas->tile_width] = texture->data[(x2 + tile_x) + (y2 + tile_y) * atlas->total_width];
+                    const int x = x2 + tile_x;
+                    if(x < texture->width && y < texture->height) atlas->data[x1 + y1 * atlas->tile_amount_x][x2 + y2 * atlas->tile_width] = texture->data[x + y * texture->width];
+                    else if(y < texture->height)                  atlas->data[x1 + y1 * atlas->tile_amount_x][x2 + y2 * atlas->tile_width] = texture->data[(texture->width - 1) + y * texture->width];
+                    else if(x < texture->width)                   atlas->data[x1 + y1 * atlas->tile_amount_x][x2 + y2 * atlas->tile_width] = texture->data[x + (texture->height - 1) * texture->width];
+                    else                                          atlas->data[x1 + y1 * atlas->tile_amount_x][x2 + y2 * atlas->tile_width] = texture->data[(texture->width - 1) + (texture->height - 1) * texture->width];
                 }
             }
         }

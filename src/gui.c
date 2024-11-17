@@ -70,7 +70,6 @@ int gui_setup(int width, int height, int scalar){
         fprintf(stderr, "Failed to create gui_surface in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
         return 1;
     }
-    SDL_LockSurface(gui_surface);
 
     // set gui_width and gui_height
     gui_width = width;
@@ -182,7 +181,9 @@ int gui_set_px(int x, int y, rgb24_t color){
     }
 
     // set pixel
+    SDL_LockSurface(gui_surface);
     ((rgb24_t *)gui_surface->pixels)[x + y * gui_width] = color;
+    SDL_UnlockSurface(gui_surface);
 
     if(mtx_unlock(&render_mtx) != thrd_success){
         fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
@@ -201,6 +202,7 @@ int gui_render_texture(int x, int y, const rgb24_texture_t *texture){
     int outp = 0;
 
     // render texture
+    SDL_LockSurface(gui_surface);
     for(int tex_y = 0; tex_y < texture->height; ++tex_y){
         if(tex_y + y < 0 || tex_y + y >= gui_height){
             outp += texture->width;
@@ -214,6 +216,7 @@ int gui_render_texture(int x, int y, const rgb24_texture_t *texture){
             ((rgb24_t *)gui_surface->pixels)[(tex_x + x) + (tex_y + y) * gui_width] = texture->data[tex_x + tex_y * texture->width];
         }
     }
+    SDL_UnlockSurface(gui_surface);
 
     if(mtx_unlock(&render_mtx) != thrd_success){
         fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
