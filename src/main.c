@@ -50,7 +50,7 @@ static const tilize_config_t default_tilize_config = {"extiles_24x24.png", 24, 2
                                                                                                    RGB24(0xff,0x00,0xff),
                                                                                                    RGB24(0xff,0xff,0x00),
                                                                                                    RGB24(0xff,0xff,0xff)}};
-static const flag_config_t   default_flag_config   = {4, "resources/exconfig.json"};
+static const flag_config_t   default_flag_config   = {16, "resources/exconfig.json"};
 
 int main(int argc, char **argv){
     if(argc < 2){

@@ -117,6 +117,7 @@ int gui_present(){
         fprintf(stderr, "Failed to lock present_mtx for some reason that isn't it being busy in %s, %s, %i\n", __FILE__, __func__, __LINE__);
         return 1;
     }
+
     if(mtx_lock(&render_mtx) != thrd_success){
         fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
         if(mtx_unlock(&present_mtx) != thrd_success){
@@ -124,12 +125,26 @@ int gui_present(){
         }
         return 1;
     }
-
     SDL_UnlockSurface(gui_surface);
     // create texture to be rendered
     SDL_Texture *gui_texture = SDL_CreateTextureFromSurface(gui_renderer, gui_surface);
     if(!gui_texture){
         fprintf(stderr, "Failed to create gui_texture in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
+        if(mtx_unlock(&render_mtx) != thrd_success){
+            fprintf(stderr, "Failed to unlock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        }
+        if(mtx_unlock(&present_mtx) != thrd_success){
+            fprintf(stderr, "Failed to unlock present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        }
+        return 1;
+    }
+    SDL_LockSurface(gui_surface);
+    if(mtx_unlock(&render_mtx) != thrd_success){
+        fprintf(stderr, "Failed to unlock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        if(mtx_unlock(&present_mtx) != thrd_success){
+            fprintf(stderr, "Failed to unlock present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        }
+        SDL_DestroyTexture(gui_texture);
         return 1;
     }
 
@@ -146,14 +161,6 @@ int gui_present(){
 
     // cleanup and return
     SDL_DestroyTexture(gui_texture);
-    SDL_LockSurface(gui_surface);
-    if(mtx_unlock(&render_mtx) != thrd_success){
-        fprintf(stderr, "Failed to unlock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        if(mtx_unlock(&present_mtx) != thrd_success){
-            fprintf(stderr, "Failed to unlock present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        }
-        return 1;
-    }
     if(mtx_unlock(&present_mtx) != thrd_success){
         fprintf(stderr, "Failed to unlock present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
         return 1;
