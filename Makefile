@@ -3,7 +3,7 @@ CC        := gcc
 CVERSION  := -std=c11
 CWARNS    := -Wall
 CC_OPT    := -O0
-CINCLUDES := -I/usr/include/SDL2 -D_REENTRANT
+CINCLUDES := -I/usr/include/SDL2
 CLIBS     := -lm -L/usr/lib -lSDL2 -lSDL2_image
 CDEFINES  :=
 
@@ -58,6 +58,25 @@ $(CJSON_H):
 	@mkdir -p $(dir $(CJSON_H))
 	curl -s -o $@ $(CJSON_H_URL)
 
+# tinycthread
+TINYCTHREAD_C     := $(SRC_DIR)/tinycthread.c
+TINYCTHREAD_C_URL := https://raw.githubusercontent.com/tinycthread/tinycthread/refs/heads/master/source/tinycthread.c
+ifeq ($(filter $(TINYCTHREAD_C),$(SRCS)),)
+	SRC += $(TINYCTHREAD_C)
+	OBJS += $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(TINYCTHREAD_C))
+endif
+TINYCTHREAD_H     := $(SRC_DIR)/tinycthread.h
+TINYCTHREAD_H_URL := https://raw.githubusercontent.com/tinycthread/tinycthread/refs/heads/master/source/tinycthread.h
+ifeq ($(filter $(TINYCTHREAD_H),$(HEADERS)),)
+	HEADERS += $(TINYCTHREAD_H)
+endif
+$(TINYCTHREAD_C):
+	@mkdir -p $(dir $(TINYCTHREAD_C))
+	curl -s -o $@ $(TINYCTHREAD_C_URL)
+$(TINYCTHREAD_H):
+	@mkdir -p $(dir $(TINYCTHREAD_H))
+	curl -s -o $@ $(TINYCTHREAD_H_URL)
+
 # compile and link program
 $(TARGET): $(OBJS)
 	@mkdir -p $(dir $@)
@@ -73,7 +92,7 @@ $(RCS_OUTP): $(RCS_BIN_DIR)/%: $(RCS_DIR)/%
 
 # downloads everything necessary for compiling
 .PHONY: init
-init: $(CJSON_H) $(CJSON_C)
+init: $(CJSON_H) $(CJSON_C) $(TINYCTHREAD_H) $(TINYCTHREAD_C)
 
 # clean project build
 .PHONY: clean
@@ -82,3 +101,4 @@ clean:
 .PHONY: cleanall
 cleanall: clean
 	rm -f $(CJSON_C) $(CJSON_H)
+	rm -f $(TINYCTHREAD_C) $(TINYCTHREAD_H)

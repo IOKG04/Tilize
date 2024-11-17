@@ -12,6 +12,7 @@ For now though, that isn't the case yet. I need to build the software first.
 
 ## Credit
 
-As of now, this project uses [cJSON](https://github.com/DaveGamble/cJSON) by [DaveGamble](https://github.com/DaveGamble) and others, distributed under the [MIT License](https://github.com/DaveGamble/cJSON/blob/master/LICENSE).
+This project uses [cJSON](https://github.com/DaveGamble/cJSON) by [DaveGamble](https://github.com/DaveGamble) and others, distributed under the [MIT License](https://github.com/DaveGamble/cJSON/blob/master/LICENSE),  
+and [tinycthread](https://github.com/tinycthread/tinycthread), distributed under a license which's name i cant find, it's [here](https://github.com/tinycthread/tinycthread/blob/master/README.txt) though.
 
 The [rounded_6x6](resources/round_6x6.png) and [rounded_24x24](resources/round_24x24.png) fonts are from [here](https://frostyfreeze.itch.io/pixel-bitmap-fonts-png-xml) and released under CC0.

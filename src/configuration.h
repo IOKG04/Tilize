@@ -47,6 +47,7 @@ typedef struct tilize_config_t{
 
 // a configuration generated at runtime as a result of flags
 typedef struct flag_config_t{
+    int   num_threads;
     char *config_path; // path of the tilize config used
 }flag_config_t;
 

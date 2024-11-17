@@ -37,6 +37,7 @@
 #include <SDL2/SDL.h>
 #include "rgb24.h"
 #include "texture.h"
+#include "tinycthread.h"
 
 // gui state
 static SDL_Window   *gui_window;
@@ -44,6 +45,8 @@ static SDL_Renderer *gui_renderer;
 static SDL_Surface  *gui_surface;
 static int           gui_width,
                      gui_height;
+static mtx_t         render_mtx,
+                     present_mtx;
 
 // sets up gui to render an image of size {width, height} and multiply its size by scalar for showing
 int gui_setup(int width, int height, int scalar){
@@ -73,6 +76,16 @@ int gui_setup(int width, int height, int scalar){
     gui_width = width;
     gui_height = height;
 
+    // initialize mutexes
+    if(mtx_init(&render_mtx, mtx_plain) != thrd_success){
+        fprintf(stderr, "Failed to initialize render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return 1;
+    }
+    if(mtx_init(&present_mtx, mtx_plain) != thrd_success){
+        fprintf(stderr, "Failed to initialize present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return 1;
+    }
+
     // present initial scene (black screen)
     rgb24_t *pixels = (rgb24_t *)gui_surface->pixels;
     for(int i = 0; i < width * height; ++i){
@@ -86,6 +99,8 @@ int gui_setup(int width, int height, int scalar){
 }
 // frees everything gui uses
 void gui_free(){
+    mtx_destroy(&render_mtx);
+    mtx_destroy(&present_mtx);
     if(gui_surface){
         SDL_UnlockSurface(gui_surface);
         SDL_FreeSurface(gui_surface);
@@ -96,6 +111,20 @@ void gui_free(){
 
 // renders current visuals to the window
 int gui_present(){
+    int trylock_success = mtx_trylock(&present_mtx);
+    if(trylock_success == thrd_busy) return 0;
+    if(trylock_success != thrd_success){
+        fprintf(stderr, "Failed to lock present_mtx for some reason that isn't it being busy in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return 1;
+    }
+    if(mtx_lock(&render_mtx) != thrd_success){
+        fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        if(mtx_unlock(&present_mtx) != thrd_success){
+            fprintf(stderr, "Failed to unlock present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        }
+        return 1;
+    }
+
     SDL_UnlockSurface(gui_surface);
     // create texture to be rendered
     SDL_Texture *gui_texture = SDL_CreateTextureFromSurface(gui_renderer, gui_surface);
@@ -118,11 +147,27 @@ int gui_present(){
     // cleanup and return
     SDL_DestroyTexture(gui_texture);
     SDL_LockSurface(gui_surface);
+    if(mtx_unlock(&render_mtx) != thrd_success){
+        fprintf(stderr, "Failed to unlock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        if(mtx_unlock(&present_mtx) != thrd_success){
+            fprintf(stderr, "Failed to unlock present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        }
+        return 1;
+    }
+    if(mtx_unlock(&present_mtx) != thrd_success){
+        fprintf(stderr, "Failed to unlock present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return 1;
+    }
     return 0;
 }
 
 // sets pixel at {x, y} of gui's internal buffer to color
 int gui_set_px(int x, int y, rgb24_t color){
+    if(mtx_lock(&render_mtx) != thrd_success){
+        fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return 1;
+    }
+
     // check if {x, y} in bounds
     if(x < 0 || x >= gui_width ||
        y < 0 || y >= gui_height){
@@ -132,11 +177,20 @@ int gui_set_px(int x, int y, rgb24_t color){
     // set pixel
     ((rgb24_t *)gui_surface->pixels)[x + y * gui_width] = color;
 
+    if(mtx_unlock(&render_mtx) != thrd_success){
+        fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return 1;
+    }
     return 0;
 }
 // renders texture to gui's internal buffer at {x, y}
 // returns amount of pixels not rendered
 int gui_render_texture(int x, int y, const rgb24_texture_t *texture){
+    if(mtx_lock(&render_mtx) != thrd_success){
+        fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return 1;
+    }
+
     int outp = 0;
 
     // render texture
@@ -154,5 +208,9 @@ int gui_render_texture(int x, int y, const rgb24_texture_t *texture){
         }
     }
 
+    if(mtx_unlock(&render_mtx) != thrd_success){
+        fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return 1;
+    }
     return outp;
 }
