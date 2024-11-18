@@ -65,7 +65,7 @@ static int process_loop(void *input_atlas_void);
 int application_setup(const tilize_config_t *restrict tilize_config, const flag_config_t *restrict flag_config){
     // get final pattern path
     #define PP_LEN 256
-    char pattern_path[PP_LEN] = {};
+    char pattern_path[PP_LEN] = "";
     strncpy(pattern_path, flag_config->config_path, PP_LEN);
     char *last_slash = strrchr(pattern_path, '/');
     if(last_slash == NULL){
@@ -78,7 +78,7 @@ int application_setup(const tilize_config_t *restrict tilize_config, const flag_
     #undef PP_LEN
 
     // load pattern as texture
-    rgb24_texture_t pattern_texture = {};
+    rgb24_texture_t pattern_texture = RGB24_TEXTURE_NULL;
     if(load_png(&pattern_texture, pattern_path)){
         fprintf(stderr, "Failed to load pattern_texture in %s, %s, %i\n", __FILE__, __func__, __LINE__);
         return 1;
@@ -144,7 +144,7 @@ void application_free(){
 // processes input
 int application_process(const rgb24_texture_t *restrict input_texture){
     // split input_texture into input_atlas
-    rgb24_atlas_t input_atlas = {};
+    rgb24_atlas_t input_atlas = RGB24_ATLAS_NULL;
     if(rgb24_atlas_from_texture(&input_atlas, input_texture, pattern_atlas.tile_width, pattern_atlas.tile_height)){
         fprintf(stderr, "Failed to split input_texture into input_atlas in %s, %s, %i\n", __FILE__, __func__, __LINE__);
         return 1;
@@ -238,7 +238,7 @@ static int process_loop(void *input_atlas_void){
         }
 
         // colorize best tile and render it to gui
-        rgb24_texture_t best_pattern_colorized = {};
+        rgb24_texture_t best_pattern_colorized = RGB24_TEXTURE_NULL;
         if(rgb24_atlas_get_tile(&best_pattern_colorized, &pattern_atlas, lowest_pt % pattern_atlas.tile_amount_x, lowest_pt / pattern_atlas.tile_amount_x)){
             fprintf(stderr, "Failed to get best_pattern_colorized (lowest_pt = %i) from pattern_atlas in %s, %s, %i\n", lowest_pt, __FILE__, __func__, __LINE__);
             return 1;

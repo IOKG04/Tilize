@@ -48,6 +48,8 @@ typedef struct rgb24_atlas_t{
     rgb24_t **data;
 } rgb24_atlas_t;
 
+#define RGB24_ATLAS_NULL ((rgb24_atlas_t){0, 0, 0, 0, 0, 0, NULL})
+
 // creates a new atlas
 // if total_width or total_height == -1, they are automatically added in
 int rgb24_atlas_create(rgb24_atlas_t *atlas, int tile_width, int tile_height, int tile_amount_x, int tile_amount_y, int total_width, int total_height);

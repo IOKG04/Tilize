@@ -42,44 +42,19 @@
 #include "rgb24.h"
 #include "texture.h"
 
-static const tilize_config_t default_tilize_config = {
+#define DTC_COLDEPTH 8
+_Static_assert(DTC_COLDEPTH >= 2, "Make this true please...");
+
+static tilize_config_t default_tilize_config = {
     "round_6x6.png",
     6,
     6,
-    27,
-    (rgb24_t[27]){
-        RGB24(0x00,0x00,0x00),
-        RGB24(0x00,0x00,0x80),
-        RGB24(0x00,0x00,0xff),
-        RGB24(0x00,0x80,0x00),
-        RGB24(0x00,0x80,0x80),
-        RGB24(0x00,0x80,0xff),
-        RGB24(0x00,0xff,0x00),
-        RGB24(0x00,0xff,0x80),
-        RGB24(0x00,0xff,0xff),
-        RGB24(0x80,0x00,0x00),
-        RGB24(0x80,0x00,0x80),
-        RGB24(0x80,0x00,0xff),
-        RGB24(0x80,0x80,0x00),
-        RGB24(0x80,0x80,0x80),
-        RGB24(0x80,0x80,0xff),
-        RGB24(0x80,0xff,0x00),
-        RGB24(0x80,0xff,0x80),
-        RGB24(0x80,0xff,0xff),
-        RGB24(0xff,0x00,0x00),
-        RGB24(0xff,0x00,0x80),
-        RGB24(0xff,0x00,0xff),
-        RGB24(0xff,0x80,0x00),
-        RGB24(0xff,0x80,0x80),
-        RGB24(0xff,0x80,0xff),
-        RGB24(0xff,0xff,0x00),
-        RGB24(0xff,0xff,0x80),
-        RGB24(0xff,0xff,0xff),
-    },
+    (DTC_COLDEPTH * DTC_COLDEPTH * DTC_COLDEPTH),
+    (rgb24_t[(DTC_COLDEPTH * DTC_COLDEPTH * DTC_COLDEPTH)]){{0}},
     0,
     -1
 };
-static const flag_config_t default_flag_config = {
+static flag_config_t default_flag_config = {
     16,
     "resources/exconfig.json"
 };
@@ -93,6 +68,15 @@ int main(int argc, char **argv){
         return 1;
     }
 
+    // initialize default_tilize_config
+    for(int r = 0; r < DTC_COLDEPTH; ++r){
+        for(int g = 0; g < DTC_COLDEPTH; ++g){
+            for(int b = 0; b < DTC_COLDEPTH; ++b){
+                default_tilize_config.colors[r * DTC_COLDEPTH * DTC_COLDEPTH + g * DTC_COLDEPTH + b] = RGB24(r * 0xff / (DTC_COLDEPTH - 1), g *  0xff / (DTC_COLDEPTH - 1), b * 0xff / (DTC_COLDEPTH - 1));
+            }
+        }
+    }
+
     // initialize SDL
     if(SDL_Init(SDL_INIT_VIDEO)){
         fprintf(stderr, "Failed to initialize SDL in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
@@ -100,7 +84,7 @@ int main(int argc, char **argv){
     }
 
     // load input image
-    rgb24_texture_t input_image = {};
+    rgb24_texture_t input_image = RGB24_TEXTURE_NULL;
     if(load_png(&input_image, argv[1])){
         fprintf(stderr, "Failed to load input_image in %s, %s, %i\n", __FILE__, __func__, __LINE__);
         goto _clean_and_exit;

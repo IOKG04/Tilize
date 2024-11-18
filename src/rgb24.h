@@ -37,13 +37,18 @@
 #include <stdint.h>
 #include <stddef.h>
 
-;
-
 // a color value
 typedef struct rgb24_t{
     uint8_t r, g, b;
 } rgb24_t;
 
-#define RGB24(r, g, b) ((rgb24_t){r, g, b})
+// before anyone asks, this is cause i used a macro to make rgb24_ts before, that doesnt work with c11 and so this is the best solution i could come up with. lets hope your compiler will use that `inline` hint
+static inline rgb24_t RGB24(uint8_t r, uint8_t g, uint8_t b){
+    rgb24_t outp;
+    outp.r = r;
+    outp.g = g;
+    outp.b = b;
+    return outp;
+}
 
 #endif

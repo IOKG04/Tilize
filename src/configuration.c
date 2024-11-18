@@ -89,7 +89,7 @@ int tilize_config_serialize(char **serialized, const tilize_config_t *restrict c
     }
     for(int i = 0; i < config->num_colors; ++i){
         // add colors[i]
-        char color_hex[7] = {};
+        char color_hex[7] = "";
         sprintf(color_hex, "%02x%02x%02x", config->colors[i].r, config->colors[i].g, config->colors[i].b);
         cJSON *ccolor = cJSON_CreateString(color_hex);
         if(!ccolor){

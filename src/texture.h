@@ -43,6 +43,8 @@ typedef struct rgb24_texture_t{
     rgb24_t *data;
 } rgb24_texture_t;
 
+#define RGB24_TEXTURE_NULL ((rgb24_texture_t){0, 0, NULL})
+
 // creates a new texture
 int rgb24_texture_create(rgb24_texture_t *texture, int width, int height);
 // destroyes texture

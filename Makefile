@@ -1,7 +1,7 @@
 # c compiler configuration
 CC        := gcc
 CVERSION  := -std=c11
-CWARNS    := -Wall
+CWARNS    := -Wall -Wextra -Wpedantic -Werror
 CC_OPT    := -O0
 CINCLUDES := -I/usr/include/SDL2
 CLIBS     := -lm -L/usr/lib -lSDL2 -lSDL2_image
