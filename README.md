@@ -25,12 +25,14 @@ Global options:
 
 Tilize options:
  -c [file]                              | Use [file] as configuration
- -j=[number]                            | Use [number] threads (default = 1) (---)
+ -j=[number]                            | Use [number] threads (default = 1)
  -s                                     | Don't show GUI (---)
  -v                                     | Print extra info (---)
 
 make-config options:
  -t[=true/false]                        | Enable/Disable true color display (---)
+
+If the same option is provided multiple times, the last one is used.
 ```
 If something is followed by `(---)`, it is not implemented yet
 

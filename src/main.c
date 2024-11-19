@@ -51,6 +51,9 @@ static const char *help_msg = "Usage:\n"
                               "\n"
                               "Tilize options:\n"
                               " -c [file]                              | Use [file] as configuration\n"
+                              " -j=[number]                            | Use [number] threads (default = 1)\n"
+                              "\n"
+                              "If the same option is provided multiple times, the last one is used.\n"
                               "\n";
 
 // returns whether or not an option with the name opt_name was provided, if so puts its index into index
@@ -60,6 +63,7 @@ static char *strdup_exceptmyversionsobettercauseitisntc23exclusive(const char *r
 
 int main(int argc, const char **argv){
     int return_code = EXIT_SUCCESS;
+    int option_index;
 
     // check if the user used too few arguments or if help is requested
     if(argc < 2 || option_provided(argc, argv, "help", NULL)){
@@ -67,17 +71,16 @@ int main(int argc, const char **argv){
         return EXIT_SUCCESS;
     }
 
-    // check if config file is provided and set up config accordingly
+    // -c option, configuration
     tilize_config_t tilize_config = TILIZE_CONFIG_NULL;
     flag_config_t   flag_config   = FLAG_CONFIG_NULL;
-    int config_index = 0;
-    if(option_provided(argc, argv, "-c", &config_index)){
+    if(option_provided(argc, argv, "-c", &option_index)){
         // config file provided
-        if(argc <= config_index + 1){
+        if(argc <= option_index + 1){
             fprintf(stderr, "Cannot try opening config_file because `-c` was given as the last argument");
             return EXIT_FAILURE;
         }
-        FILE *config_file = fopen(argv[config_index + 1], "r");
+        FILE *config_file = fopen(argv[option_index + 1], "r");
         if(!config_file){
             fprintf(stderr, "Failed to open config_file in %s, %s, %i\n", __FILE__, __func__, __LINE__);
             return EXIT_FAILURE;
@@ -109,7 +112,7 @@ int main(int argc, const char **argv){
         }
         free(config_text);
 
-        flag_config.config_path = strdup_exceptmyversionsobettercauseitisntc23exclusive(argv[config_index + 1]);
+        flag_config.config_path = strdup_exceptmyversionsobettercauseitisntc23exclusive(argv[option_index + 1]);
         if(!flag_config.config_path){
             fprintf(stderr, "Failed to duplicate to flag_config.config_path in %s, %s, %i\n", __FILE__, __func__, __LINE__);
             return EXIT_FAILURE;
@@ -134,8 +137,19 @@ int main(int argc, const char **argv){
         tilize_config.forg_color   = -1;
     }
 
-    // -j flag (eventually)
-    flag_config.num_threads = 16;
+    // -j= option, thread count
+    if(option_provided(argc, argv, "-j", &option_index)){
+        // option provided
+        flag_config.num_threads = atoi(&argv[option_index][3]);
+        if(flag_config.num_threads <= 0){
+            fprintf(stderr, "Cannot run with non positive amount of threads. Please use a positive number for `-j`\n");
+            return EXIT_FAILURE;
+        }
+    }
+    else{
+        // option not provided
+        flag_config.num_threads = 1;
+    }
 
     // initialize SDL
     if(SDL_Init(SDL_INIT_VIDEO)){
@@ -189,7 +203,7 @@ int main(int argc, const char **argv){
 // returns whether or not an option with the name opt_name was provided, if so puts its index into index
 static int option_provided(int argc, const char **argv, const char *restrict opt_name, int *restrict index){
     int opt_len = strlen(opt_name);
-    for(int i = 1; i < argc; ++i){
+    for(int i = argc - 1; i > 0; --i){
         for(int j = 0; j < opt_len; ++j){
             if(argv[i][j] == 0) goto _next_argument;
             if(argv[i][j] != opt_name[j]) goto _next_argument;
