@@ -25,7 +25,7 @@ Global options:
 
 Tilize options:
  -c [file]                              | Use [file] as configuration
- -j=[number]                            | Use [number] threads (default = 1)
+ -j[=number]                            | Use multiple threads ([number] if provided, otherwise maximum amount available)
  -s                                     | Don't show GUI (---)
  -v                                     | Print extra info (---)
 

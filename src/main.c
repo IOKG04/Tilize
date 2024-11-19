@@ -38,6 +38,7 @@
 #include <SDL2/SDL.h>
 #include "application.h"
 #include "atlas.h"
+#include "get_threads.h"
 #include "gui.h"
 #include "load_png.h"
 #include "rgb24.h"
@@ -51,7 +52,7 @@ static const char *help_msg = "Usage:\n"
                               "\n"
                               "Tilize options:\n"
                               " -c [file]                              | Use [file] as configuration\n"
-                              " -j=[number]                            | Use [number] threads (default = 1)\n"
+                              " -j[=number]                            | Use multiple threads ([number] if provided, otherwise maximum amount available)\n"
                               "\n"
                               "If the same option is provided multiple times, the last one is used.\n"
                               "\n";
@@ -137,13 +138,29 @@ int main(int argc, const char **argv){
         tilize_config.forg_color   = -1;
     }
 
-    // -j= option, thread count
+    // -j option, thread count
     if(option_provided(argc, argv, "-j", &option_index)){
         // option provided
-        flag_config.num_threads = atoi(&argv[option_index][3]);
-        if(flag_config.num_threads <= 0){
-            fprintf(stderr, "Cannot run with non positive amount of threads. Please use a positive number for `-j`\n");
-            return EXIT_FAILURE;
+        if(strlen(argv[option_index]) > 2 && argv[option_index][2] == '='){
+            // -j= option, specified thread count
+            flag_config.num_threads = atoi(&argv[option_index][3]);
+            if(flag_config.num_threads <= 0){
+                fprintf(stderr, "Cannot run with non positive amount of threads. Please use a positive number for `-j`\n");
+                return EXIT_FAILURE;
+            }
+        }
+        else{
+            // -j option, get thread count
+            #if GET_THREADS_SUPPORTED
+                flag_config.num_threads = get_thread_count();
+                if(flag_config.num_threads < 0){
+                    fprintf(stderr, "Failed to get thread count in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+                    return EXIT_FAILURE;
+                }
+            #else
+                fprintf(stderr, "Your system does not currently support the `-j` option. Please use `-j=` instead.\n");
+                return EXIT_FAILURE;
+            #endif
         }
     }
     else{
