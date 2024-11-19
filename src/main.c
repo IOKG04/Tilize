@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <limits.h>
 #include <SDL2/SDL.h>
 #include "application.h"
@@ -42,68 +43,132 @@
 #include "rgb24.h"
 #include "texture.h"
 
-#define DTC_COLDEPTH 8
-_Static_assert(DTC_COLDEPTH >= 2, "Make this true please...");
+static const char *help_msg = "Usage:\n"
+                              " Tilize [[options]] [file]              | Tilizes [file] with [options]\n"
+                              " Tilize help                            | Show this message\n"
+                              "\n"
+                              "Global options:\n"
+                              "\n"
+                              "Tilize options:\n"
+                              " -c [file]                              | Use [file] as configuration\n"
+                              "\n";
 
-static tilize_config_t default_tilize_config = {
-    "round_6x6.png",
-    6,
-    6,
-    (DTC_COLDEPTH * DTC_COLDEPTH * DTC_COLDEPTH),
-    (rgb24_t[(DTC_COLDEPTH * DTC_COLDEPTH * DTC_COLDEPTH)]){{0}},
-    0,
-    -1
-};
-static flag_config_t default_flag_config = {
-    16,
-    "resources/exconfig.json"
-};
+// returns whether or not an option with the name opt_name was provided, if so puts its index into index
+static int option_provided(int argc, const char **argv, const char *restrict opt_name, int *restrict index);
+// makes a copy of src and returns it
+static char *strdup_exceptmyversionsobettercauseitisntc23exclusive(const char *restrict src);
 
-int main(int argc, char **argv){
-    if(argc < 2){
-        // TODO: update usage message as stuff gets added
-        printf("Too few arguments\n\n");
-        printf("Usage:\n");
-        printf(" %s [.png]\tProcesses [.png]\n", argv[0]);
-        return 1;
+int main(int argc, const char **argv){
+    int return_code = EXIT_SUCCESS;
+
+    // check if the user used too few arguments or if help is requested
+    if(argc < 2 || option_provided(argc, argv, "help", NULL)){
+        printf("%s", help_msg);
+        return EXIT_SUCCESS;
     }
 
-    // initialize default_tilize_config
-    for(int r = 0; r < DTC_COLDEPTH; ++r){
-        for(int g = 0; g < DTC_COLDEPTH; ++g){
-            for(int b = 0; b < DTC_COLDEPTH; ++b){
-                default_tilize_config.colors[r * DTC_COLDEPTH * DTC_COLDEPTH + g * DTC_COLDEPTH + b] = RGB24(r * 0xff / (DTC_COLDEPTH - 1), g *  0xff / (DTC_COLDEPTH - 1), b * 0xff / (DTC_COLDEPTH - 1));
-            }
+    // check if config file is provided and set up config accordingly
+    tilize_config_t tilize_config = TILIZE_CONFIG_NULL;
+    flag_config_t   flag_config   = FLAG_CONFIG_NULL;
+    int config_index = 0;
+    if(option_provided(argc, argv, "-c", &config_index)){
+        // config file provided
+        if(argc <= config_index + 1){
+            fprintf(stderr, "Cannot try opening config_file because `-c` was given as the last argument");
+            return EXIT_FAILURE;
+        }
+        FILE *config_file = fopen(argv[config_index + 1], "r");
+        if(!config_file){
+            fprintf(stderr, "Failed to open config_file in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            return EXIT_FAILURE;
+        }
+        if(fseek(config_file, 0, SEEK_END)){
+            fprintf(stderr, "Failed to seek to end of config_file in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            fclose(config_file);
+            return EXIT_FAILURE;
+        }
+        long config_file_size = ftell(config_file);
+        if(config_file_size == -1L){
+            fprintf(stderr, "Failed to tell position in config_file in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            fclose(config_file);
+            return EXIT_FAILURE;
+        }
+        rewind(config_file);
+        char *config_text = calloc(config_file_size + 16, sizeof(char));
+        if(!config_text){
+            fprintf(stderr, "Failed to allocate config_text in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            fclose(config_file);
+            return EXIT_FAILURE;
+        }
+        fread(config_text, sizeof(char), config_file_size + 8, config_file);
+        fclose(config_file);
+        if(tilize_config_deserialize(&tilize_config, config_text)){
+            fprintf(stderr, "Failed to deserialize config in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            free(config_text);
+            return EXIT_FAILURE;
+        }
+        free(config_text);
+
+        flag_config.config_path = strdup_exceptmyversionsobettercauseitisntc23exclusive(argv[config_index + 1]);
+        if(!flag_config.config_path){
+            fprintf(stderr, "Failed to duplicate to flag_config.config_path in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            return EXIT_FAILURE;
         }
     }
+    else{
+        // config file not provided or failed to load
+        flag_config.config_path = "resources/this_shouldnt_be_real.json";
+
+        tilize_config.pattern_path = "simpletiles_4x4.png";
+        tilize_config.tile_width   = 4;
+        tilize_config.tile_height  = 4;
+        tilize_config.num_colors   = 2;
+        tilize_config.colors       = malloc(2 * sizeof(*tilize_config.colors));
+        if(!tilize_config.colors){
+            fprintf(stderr, "Failed to allocate colors int %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            return EXIT_FAILURE;
+        }
+        tilize_config.colors[0]    = RGB24(0x00,0x00,0x00);
+        tilize_config.colors[1]    = RGB24(0xff,0xff,0xff);
+        tilize_config.bckg_color   = -1;
+        tilize_config.forg_color   = -1;
+    }
+
+    // -j flag (eventually)
+    flag_config.num_threads = 16;
 
     // initialize SDL
     if(SDL_Init(SDL_INIT_VIDEO)){
         fprintf(stderr, "Failed to initialize SDL in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
+        return_code = EXIT_FAILURE;
         goto _clean_and_exit;
     }
 
     // load input image
     rgb24_texture_t input_image = RGB24_TEXTURE_NULL;
-    if(load_png(&input_image, argv[1])){
+    if(load_png(&input_image, argv[argc - 1])){
         fprintf(stderr, "Failed to load input_image in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return_code = EXIT_FAILURE;
         goto _clean_and_exit;
     }
 
     // initialize gui
     if(gui_setup(input_image.width, input_image.height, 1)){
         fprintf(stderr, "Failed to initialize gui in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return_code = EXIT_FAILURE;
         goto _clean_and_exit;
     }
 
     // do the thing
-    if(application_setup(&default_tilize_config, &default_flag_config)){
+    if(application_setup(&tilize_config, &flag_config)){
         fprintf(stderr, "Failed to setup application in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return_code = EXIT_FAILURE;
         goto _clean_and_exit;
     }
     Uint64 process_start = SDL_GetTicks64();
     if(application_process(&input_image)){
         fprintf(stderr, "Failed to process input_image in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return_code = EXIT_FAILURE;
         goto _clean_and_exit;
     }
     Uint64 process_end   = SDL_GetTicks64();
@@ -118,5 +183,31 @@ int main(int argc, char **argv){
     gui_free();
     rgb24_texture_destroy(&input_image);
     SDL_Quit();
+    return return_code;
+}
+
+// returns whether or not an option with the name opt_name was provided, if so puts its index into index
+static int option_provided(int argc, const char **argv, const char *restrict opt_name, int *restrict index){
+    int opt_len = strlen(opt_name);
+    for(int i = 1; i < argc; ++i){
+        for(int j = 0; j < opt_len; ++j){
+            if(argv[i][j] == 0) goto _next_argument;
+            if(argv[i][j] != opt_name[j]) goto _next_argument;
+        }
+        if(index) *index = i;
+        return 1;
+        _next_argument:;
+    }
     return 0;
+}
+// makes a copy of src and returns it
+static char *strdup_exceptmyversionsobettercauseitisntc23exclusive(const char *restrict src){
+    size_t src_len = strlen(src) + 1;
+    char *outp = malloc(src_len);
+    if(!outp){
+        fprintf(stderr, "Failed to allocate outp in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        return NULL;
+    }
+    strncpy(outp, src, src_len);
+    return outp;
 }

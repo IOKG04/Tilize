@@ -47,11 +47,15 @@ typedef struct tilize_config_t{
              forg_color;   // same as above
 } tilize_config_t;
 
+#define TILIZE_CONFIG_NULL ((tilize_config_t){NULL, 0, 0, 0, NULL, 0, 0})
+
 // a configuration generated at runtime as a result of flags
 typedef struct flag_config_t{
     int   num_threads;
     char *config_path; // path of the tilize config used
-}flag_config_t;
+} flag_config_t;
+
+#define FLAG_CONFIG_NULL ((flag_config_t){1, NULL})
 
 // serializes a configuration into json
 int tilize_config_serialize(char **serialized, const tilize_config_t *restrict config);

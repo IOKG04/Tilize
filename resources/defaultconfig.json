@@ -1,0 +1,9 @@
+{
+    "pattern_path": "simpletiles_4x4.png",
+    "tile_width": 4,
+    "tile_height": 4,
+    "colors": [
+        "000000",
+        "ffffff"
+    ]
+}

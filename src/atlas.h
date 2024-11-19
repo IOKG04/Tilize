@@ -63,5 +63,7 @@ int rgb24_atlas_from_texture(rgb24_atlas_t *restrict atlas, const rgb24_texture_
 
 // gets the tile at {x, y} in atlas as a texture
 int rgb24_atlas_get_tile(rgb24_texture_t *restrict tile_texture, const rgb24_atlas_t *restrict atlas, int x, int y);
+// sets tile at {x, y} in atlas to tile_texture
+int rgb24_atlas_set_tile(rgb24_atlas_t *restrict atlas, const rgb24_texture_t *restrict tile_texture, int x, int y);
 
 #endif

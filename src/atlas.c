@@ -156,3 +156,17 @@ int rgb24_atlas_get_tile(rgb24_texture_t *restrict tile_texture, const rgb24_atl
 
     return 0;
 }
+// sets tile at {x, y} in atlas to tile_texture
+int rgb24_atlas_set_tile(rgb24_atlas_t *restrict atlas, const rgb24_texture_t *restrict tile_texture, int tile_x, int tile_y){
+    // copy data
+    for(int y = 0; y < atlas->tile_height; ++y){
+        for(int x = 0; x < atlas->tile_width; ++x){
+            if(x < tile_texture->width && y < tile_texture->height) atlas->data[tile_x + tile_y * atlas->tile_amount_x][x + y * atlas->tile_width] = tile_texture->data[x + y * tile_texture->width];
+            else if(y < tile_texture->height)                       atlas->data[tile_x + tile_y * atlas->tile_amount_x][x + y * atlas->tile_width] = tile_texture->data[(tile_texture->width - 1) + y * tile_texture->width];
+            else if(x < tile_texture->width)                        atlas->data[tile_x + tile_y * atlas->tile_amount_x][x + y * atlas->tile_width] = tile_texture->data[x + (tile_texture->height - 1) * tile_texture->width];
+            else                                                    atlas->data[tile_x + tile_y * atlas->tile_amount_x][x + y * atlas->tile_width] = tile_texture->data[(tile_texture->width - 1) + (tile_texture->height - 1) * tile_texture->width];
+        }
+    }
+
+    return 0;
+}

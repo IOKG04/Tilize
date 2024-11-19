@@ -60,6 +60,8 @@ static mtx_t          ct_i_mtx;
 static int ct_i_increment();
 // performs the loop that does the thing
 static int process_loop(void *input_atlas_void);
+// gets difference between a pattern with specific colors and an rgb24_t array
+static unsigned long get_difference(const rgb24_t *restrict data, int pattern_index, int col1, int col2);
 
 // sets up application with the provided configs
 int application_setup(const tilize_config_t *restrict tilize_config, const flag_config_t *restrict flag_config){
@@ -203,7 +205,7 @@ static int ct_i_increment(){
 }
 // performs the loop that does the thing
 static int process_loop(void *input_atlas_void){
-    #define input_atlas (*(const rgb24_atlas_t *)input_atlas_void)
+    #define input_atlas (*(rgb24_atlas_t *)input_atlas_void)
     int ct_i;
     while((ct_i = ct_i_increment()) < input_atlas.tile_amount_x * input_atlas.tile_amount_y){
         const int ct_x = ct_i % input_atlas.tile_amount_x,
@@ -215,18 +217,9 @@ static int process_loop(void *input_atlas_void){
         unsigned long lowest_diff = ULONG_MAX;
         int lowest_pt, lowest_col1, lowest_col2;
         for(int pt_i = 0; pt_i < pattern_atlas.tile_amount_x * pattern_atlas.tile_amount_y; ++pt_i){
-            const rgb24_t *pattern_tile = pattern_atlas.data[pt_i];
             for(int col1 = col1_min; col1 < col1_max; ++col1){
                 for(int col2 = col2_min; col2 < col2_max; ++col2){
-                    unsigned long difference = 0;
-                    for(int i = 0; i < pattern_atlas.tile_width * pattern_atlas.tile_height; ++i){
-                        rgb24_t col_cmp;
-                        if(pattern_tile[i].r >= 0x80) col_cmp = colors[col1];
-                        else                          col_cmp = colors[col2];
-                        difference += abs(col_cmp.r - (int)current_tile[i].r);
-                        difference += abs(col_cmp.g - (int)current_tile[i].g);
-                        difference += abs(col_cmp.b - (int)current_tile[i].b);
-                    }
+                    unsigned long difference = get_difference(current_tile, pt_i, col1, col2);
                     if(difference < lowest_diff){
                         lowest_diff = difference;
                         lowest_pt   = pt_i;
@@ -237,7 +230,7 @@ static int process_loop(void *input_atlas_void){
             }
         }
 
-        // colorize best tile and render it to gui
+        // colorize best tile
         rgb24_texture_t best_pattern_colorized = RGB24_TEXTURE_NULL;
         if(rgb24_atlas_get_tile(&best_pattern_colorized, &pattern_atlas, lowest_pt % pattern_atlas.tile_amount_x, lowest_pt / pattern_atlas.tile_amount_x)){
             fprintf(stderr, "Failed to get best_pattern_colorized (lowest_pt = %i) from pattern_atlas in %s, %s, %i\n", lowest_pt, __FILE__, __func__, __LINE__);
@@ -247,10 +240,28 @@ static int process_loop(void *input_atlas_void){
             if(best_pattern_colorized.data[i].r >= 0x80) best_pattern_colorized.data[i] = colors[lowest_col1];
             else                                         best_pattern_colorized.data[i] = colors[lowest_col2];
         }
+        // render best tile to gui
         gui_render_texture(ct_x * input_atlas.tile_width, ct_y * input_atlas.tile_height, &best_pattern_colorized);
         gui_present();
+        // save best tile to input_atlas
+        rgb24_atlas_set_tile(&input_atlas, &best_pattern_colorized, ct_x, ct_y);
+        // clean up
         rgb24_texture_destroy(&best_pattern_colorized);
     }
     return 0;
     #undef input_atlas
+}
+// gets difference between a pattern with specific colors and an rgb24_t array
+static unsigned long get_difference(const rgb24_t *restrict current_tile, int pattern_index, int col1, int col2){
+    unsigned long difference = 0;
+    const rgb24_t *pattern_tile = pattern_atlas.data[pattern_index];
+    for(int i = 0; i < pattern_atlas.tile_width * pattern_atlas.tile_height; ++i){
+        rgb24_t col_cmp;
+        if(pattern_tile[i].r >= 0x80) col_cmp = colors[col1];
+        else                          col_cmp = colors[col2];
+        difference += abs(col_cmp.r - (int)current_tile[i].r);
+        difference += abs(col_cmp.g - (int)current_tile[i].g);
+        difference += abs(col_cmp.b - (int)current_tile[i].b);
+    }
+    return difference;
 }
