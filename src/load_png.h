@@ -37,6 +37,8 @@
 #include "texture.h"
 
 // loads texture from png_path
-int load_png(rgb24_texture_t *texture, const char *png_path);
+int load_png(rgb24_texture_t *restrict texture, const char *png_path);
+// saves texture at png_path
+int save_png(const char *png_path, const rgb24_texture_t *restrict texture);
 
 #endif

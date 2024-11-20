@@ -83,9 +83,16 @@ STB_IMAGE_H_URL := https://raw.githubusercontent.com/nothings/stb/refs/heads/mas
 ifeq ($(filter $(STB_IMAGE_H),$(HEADERS)),)
 	HEADERS += $(STB_IMAGE_H)
 endif
-$(STB_IMAGE_H):
-	@mkdir -p $(dir $(STB_IMAGE_H))
-	curl -s -o $@ $(STB_IMAGE_H_URL)
+
+# stb_image_write
+STB_IMAGE_WRITE_H     := $(SRC_DIR)/stb_image_write.h
+STB_IMAGE_WRITE_H_URL := https://raw.githubusercontent.com/nothings/stb/refs/heads/master/stb_image_write.h
+ifeq ($(filter $(STB_IMAGE_WRITE_H),$(HEADERS)),)
+	HEADERS += $(STB_IMAGE_WRITE_H)
+endif
+$(STB_IMAGE_WRITE_H):
+	@mkdir -p $(dir $(STB_IMAGE_WRITE_H))
+	curl -s -o $@ $(STB_IMAGE_WRITE_H_URL)
 
 # compile and link program
 $(TARGET): $(OBJS)
@@ -102,7 +109,7 @@ $(RCS_OUTP): $(RCS_BIN_DIR)/%: $(RCS_DIR)/%
 
 # downloads everything necessary for compiling
 .PHONY: init
-init: $(CJSON_H) $(CJSON_C) $(TINYCTHREAD_H) $(TINYCTHREAD_C) $(STB_IMAGE_H)
+init: $(CJSON_H) $(CJSON_C) $(TINYCTHREAD_H) $(TINYCTHREAD_C) $(STB_IMAGE_H) $(STB_IMAGE_WRITE_H)
 
 # clean project build
 .PHONY: clean
@@ -112,4 +119,4 @@ clean:
 cleanall: clean
 	rm -f $(CJSON_C) $(CJSON_H)
 	rm -f $(TINYCTHREAD_C) $(TINYCTHREAD_H)
-	rm -f $(STB_IMAGE_H)
+	rm -f $(STB_IMAGE_H) $(STB_IMAGE_WRITE_H)

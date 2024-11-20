@@ -49,8 +49,13 @@ static const char *help_msg = "Usage:\n"
                               " Tilize help                | Show this message\n"
                               "\n"
                               "Options:\n"
+                              " -o [file]                  | Save result to [file]\n"
                               " -c [file]                  | Use [file] as configuration\n"
+                          #if GET_THREADS_SUPPORTED
                               " -j[=number]                | Use multiple threads ([number] if provided, otherwise maximum amount available)\n"
+                          #else
+                              " -j=[number]                | Use [number] threads\n"
+                          #endif
                               "\n"
                               "If the same option is provided multiple times, the last one is used.\n"
                               "\n";
@@ -164,6 +169,31 @@ int main(int argc, const char **argv){
     else{
         // option not provided
         flag_config.num_threads = 1;
+    }
+
+    // -o option, output file
+    if(option_provided(argc, argv, "-o", &option_index)){
+        // option provided
+        if(argc <= option_index + 1){
+            fprintf(stderr, "Cannot try writing to output file because `-o` was given as the last argument");
+            return EXIT_FAILURE;
+        }
+        flag_config.file_outp_path = argv[option_index + 1];
+        FILE *outp_file_test = fopen(flag_config.file_outp_path, "r");
+        if(outp_file_test){
+            fclose(outp_file_test);
+            printf("Warning: %s already exists. Overwrite (y / N)?\n", flag_config.file_outp_path);
+            char yN = getchar();
+            if(!(yN == 'y' || yN == 'Y')){
+                fprintf(stderr, "Not overwriting %s, exiting\n", flag_config.file_outp_path);
+                return EXIT_FAILURE; // or should this be EXIT_SUCCESS? it fails in the way that it didnt tilize, it succeeds in the way it obeyed the user
+            }
+            while(getchar() != '\n');
+        }
+    }
+    else{
+        // option not provided
+        flag_config.file_outp_path = NULL;
     }
 
     // initialize SDL

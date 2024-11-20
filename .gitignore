@@ -3,3 +3,4 @@ obj/
 src/cJSON.*
 src/tinycthread.*
 src/stb_image.h
+src/stb_image_write.h

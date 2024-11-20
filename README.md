@@ -19,7 +19,7 @@ Usage:
  Tilize help                            | Show this message
 
 Options:
- -o [file]                              | Save output to [file] (---)
+ -o [file]                              | Save output to [file]
  -c [file]                              | Use [file] as configuration
  -j[=number]                            | Use multiple threads ([number] if provided, otherwise maximum amount available)
  -s                                     | Don't show GUI (---)

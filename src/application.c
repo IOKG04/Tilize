@@ -55,6 +55,7 @@ static int            col1_min,
                       col2_max;
 static int            __ct_i;
 static mtx_t          ct_i_mtx;
+static const char    *output_file;
 
 // increments ct_i and returns its previous value
 static int ct_i_increment();
@@ -66,8 +67,8 @@ static unsigned long get_difference(const rgb24_t *restrict data, int pattern_in
 // sets up application with the provided configs
 int application_setup(const tilize_config_t *restrict tilize_config, const flag_config_t *restrict flag_config){
     // get final pattern path
-    #define PP_LEN 256
-    char pattern_path[PP_LEN] = "";
+    #define PP_LEN 255
+    char pattern_path[PP_LEN + 1] = "";
     strncpy(pattern_path, flag_config->config_path, PP_LEN);
     char *last_slash = strrchr(pattern_path, '/');
     if(last_slash == NULL){
@@ -133,6 +134,7 @@ int application_setup(const tilize_config_t *restrict tilize_config, const flag_
     // misc
     num_threads = flag_config->num_threads;
     if(num_threads < 1) num_threads = 1;
+    output_file = flag_config->file_outp_path;
 
     return 0;
 }
@@ -184,6 +186,23 @@ int application_process(const rgb24_texture_t *restrict input_texture){
     }
     gui_present();
 
+    // output to file
+    if(output_file){
+        rgb24_texture_t output_texture = RGB24_TEXTURE_NULL;
+        if(rgb24_texture_from_atlas(&output_texture, &input_atlas)){
+            fprintf(stderr, "Failed to generate output_texture from input_atlas in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            rgb24_atlas_destroy(&input_atlas);
+            return 1;
+        }
+        if(save_png(output_file, &output_texture)){
+            fprintf(stderr, "Failed to save output_texture to %s in %s, %s, %i\n", output_file, __FILE__, __func__, __LINE__);
+            rgb24_texture_destroy(&output_texture);
+            rgb24_atlas_destroy(&input_atlas);
+            return 1;
+        }
+        rgb24_texture_destroy(&output_texture);
+    }
+
     // clean and return
     rgb24_atlas_destroy(&input_atlas);
     return 0;
@@ -215,7 +234,9 @@ static int process_loop(void *input_atlas_void){
         // TODO: make more readable and such
         const rgb24_t *current_tile = input_atlas.data[ct_i];
         unsigned long lowest_diff = ULONG_MAX;
-        int lowest_pt, lowest_col1, lowest_col2;
+        int lowest_pt   = 0,
+            lowest_col1 = 0,
+            lowest_col2 = 0;
         for(int pt_i = 0; pt_i < pattern_atlas.tile_amount_x * pattern_atlas.tile_amount_y; ++pt_i){
             for(int col1 = col1_min; col1 < col1_max; ++col1){
                 for(int col2 = col2_min; col2 < col2_max; ++col2){
