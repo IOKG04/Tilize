@@ -34,58 +34,34 @@
 #include "load_png.h"
 
 #include <stdio.h>
-#include <stdint.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include "stb_image.h"
 #include "texture.h"
 
 // loads texture from png_path
 int load_png(rgb24_texture_t *texture, const char *png_path){
-    // initialize sdl_image
-    if(IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG){
-        fprintf(stderr, "Failed to initialize SDL_image in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, IMG_GetError());
-        return 1;
-    }
-
-    // load unconverted image
-    SDL_Surface *unconverted = IMG_Load(png_path);
-    if(!unconverted){
-        fprintf(stderr, "Failed to load %s in %s, %s, %i:\n%s\n", png_path, __FILE__, __func__, __LINE__, IMG_GetError());
-        IMG_Quit();
-        return 1;
-    }
-
-    // convert image to format
-    SDL_Surface *converted = SDL_ConvertSurfaceFormat(unconverted, SDL_PIXELFORMAT_RGBA8888, 0);
-    if(!converted){
-        fprintf(stderr, "Failed to convert unconverted to create converted in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
-        SDL_FreeSurface(unconverted);
-        IMG_Quit();
+    // load image
+    int img_width, img_height;
+    unsigned char *img_data = stbi_load(png_path, &img_width, &img_height, NULL, STBI_rgb);
+    if(!img_data){
+        fprintf(stderr, "Failed to load image in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, stbi_failure_reason());
         return 1;
     }
 
     // create texture
-    if(rgb24_texture_create(texture, converted->w, converted->h)){
+    if(rgb24_texture_create(texture, img_width, img_height)){
         fprintf(stderr, "Failed to create texture in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        SDL_FreeSurface(converted);
-        SDL_FreeSurface(unconverted);
-        IMG_Quit();
+        free(img_data);
         return 1;
     }
 
-    // load data into texture
-    SDL_LockSurface(converted);
-    uint32_t *pixels = (uint32_t *)converted->pixels;
-    for(int i = 0; i < converted->w * converted->h; ++i){
-        texture->data[i].r = (pixels[i] >> 24) & 0xff;
-        texture->data[i].g = (pixels[i] >> 16) & 0xff;
-        texture->data[i].b = (pixels[i] >>  8) & 0xff;
+    // copy data
+    for(int i = 0; i < img_width * img_height; ++i){
+        texture->data[i].r = img_data[i * 3 + 0];
+        texture->data[i].g = img_data[i * 3 + 1];
+        texture->data[i].b = img_data[i * 3 + 2];
     }
-    SDL_UnlockSurface(converted);
 
     // clean and return
-    SDL_FreeSurface(converted);
-    SDL_FreeSurface(unconverted);
-    IMG_Quit();
+    free(img_data);
     return 0;
 }

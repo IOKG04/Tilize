@@ -2,3 +2,4 @@ bin/
 obj/
 src/cJSON.*
 src/tinycthread.*
+src/stb_image.h
