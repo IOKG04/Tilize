@@ -20,7 +20,7 @@ TARGET_NAME := Tilize
 # CONFIGURATION END
 
 # combined cflags
-CFLAGS := $(CVERSION) $(CWARNS) $(CC_OPT) $(CINCLUDES) $(CLIBS) $(CDEFINES)
+CFLAGS = $(CVERSION) $(CWARNS) $(CC_OPT) $(CINCLUDES) $(CLIBS) $(CDEFINES)
 
 # target and output resources position
 TARGET      := $(BIN_DIR)/$(TARGET_NAME)
@@ -38,6 +38,13 @@ RCS_OUTP := $(patsubst $(RCS_DIR)/%,$(RCS_BIN_DIR)/%,$(RCS_INP))
 # completely build project
 .PHONY: all
 all: $(TARGET) $(RCS_OUTP)
+
+# completely build project without requiring SDL2 (and without a gui)
+.PHONY: nosdl
+nosdl: CINCLUDES :=
+nosdl: CLIBS     := -lm
+nosdl: CDEFINES  := -DGUI_SUPPORTED=0
+nosdl: all
 
 # cJSON
 CJSON_C     := $(SRC_DIR)/cJSON.c

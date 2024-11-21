@@ -55,6 +55,6 @@ int get_thread_count(){
         #endif
     #else
         fprintf(stderr, "Warning: get_thread_count() not supported at compiletime\n");
-        return 1;
+        return 0;
     #endif
 }

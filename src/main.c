@@ -204,12 +204,14 @@ int main(int argc, const char **argv){
         goto _clean_and_exit;
     }
 
-    // initialize gui
-    if(gui_setup(input_image.width, input_image.height, 1)){
-        fprintf(stderr, "Failed to initialize gui in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        return_code = EXIT_FAILURE;
-        goto _clean_and_exit;
-    }
+    #if GUI_SUPPORTED
+        // initialize gui
+        if(gui_setup(input_image.width, input_image.height, 1)){
+            fprintf(stderr, "Failed to initialize gui in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            return_code = EXIT_FAILURE;
+            goto _clean_and_exit;
+        }
+    #endif
 
     // record start time in ms
     struct timespec ts;
@@ -240,12 +242,16 @@ int main(int argc, const char **argv){
     long long unsigned process_end_ms = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
     printf("Finished in %llu ms\n", (long long unsigned)(process_end_ms - process_start_ms));
 
-    // wait to exit
-    while(getchar() != '\n');
+    #if GUI_SUPPORTED
+        // wait to exit
+        while(getchar() != '\n');
+    #endif
 
     // clean and exit
     _clean_and_exit:;
-    gui_free();
+    #if GUI_SUPPORTED
+        gui_free();
+    #endif
     rgb24_texture_destroy(&input_image);
     return return_code;
 }

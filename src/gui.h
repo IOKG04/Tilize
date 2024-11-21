@@ -34,6 +34,10 @@
 #ifndef GUI_H__
 #define GUI_H__
 
+#ifndef GUI_SUPPORTED
+    #define GUI_SUPPORTED 1
+#endif
+
 #include "rgb24.h"
 #include "texture.h"
 

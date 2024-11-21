@@ -154,9 +154,11 @@ int application_process(const rgb24_texture_t *restrict input_texture){
         return 1;
     }
 
-    // show previous image
-    gui_render_texture(0, 0, input_texture);
-    gui_present();
+    #if GUI_SUPPORTED
+        // show previous image
+        gui_render_texture(0, 0, input_texture);
+        gui_present();
+    #endif
 
     // do the thing
     __ct_i = 0;
@@ -184,7 +186,9 @@ int application_process(const rgb24_texture_t *restrict input_texture){
             free(process_threads);
         }
     }
-    gui_present();
+    #if GUI_SUPPORTED
+        gui_present();
+    #endif
 
     // output to file
     if(output_file){
@@ -261,9 +265,11 @@ static int process_loop(void *input_atlas_void){
             if(best_pattern_colorized.data[i].r >= 0x80) best_pattern_colorized.data[i] = colors[lowest_col1];
             else                                         best_pattern_colorized.data[i] = colors[lowest_col2];
         }
-        // render best tile to gui
-        gui_render_texture(ct_x * input_atlas.tile_width, ct_y * input_atlas.tile_height, &best_pattern_colorized);
-        gui_present();
+        #if GUI_SUPPORTED
+            // render best tile to gui
+            gui_render_texture(ct_x * input_atlas.tile_width, ct_y * input_atlas.tile_height, &best_pattern_colorized);
+            gui_present();
+        #endif
         // save best tile to input_atlas
         rgb24_atlas_set_tile(&input_atlas, &best_pattern_colorized, ct_x, ct_y);
         // clean up
