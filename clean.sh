@@ -1,15 +1,18 @@
 #! /bin/sh
 
-echo "Clearing dependencies"
-rm -f src/cJSON.*
-rm -f src/tinycthread.*
-rm -f src/stb*.h
-echo "Done"
+if [ "$1" == "all" ]; then
+    echo "Clearing dependencies"
+    rm -f src/cJSON.*
+    rm -f src/tinycthread.*
+    rm -f src/stb*.h
+    echo
+fi
 
 echo "Clearing bin/"
 rm -rf bin/
-echo "Done"
+echo "Clearing obj/"
+rm -rf obj/
+echo
 
 echo "Clearing premake5 files"
 rm -f Makefile Tilize.make
-echo "Done"

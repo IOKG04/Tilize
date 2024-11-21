@@ -4,7 +4,7 @@ echo "Clearing dependencies"
 rm -f src/cJSON.*
 rm -f src/tinycthread.*
 rm -f src/stb*.h
-echo "Done"
+echo
 
 echo "Downloading dependencies"
 echo "cJSON"
@@ -16,8 +16,7 @@ curl -s -o src/tinycthread.h https://raw.githubusercontent.com/tinycthread/tinyc
 echo "stb*"
 curl -s -o src/stb_image.h https://raw.githubusercontent.com/nothings/stb/refs/heads/master/stb_image.h
 curl -s -o src/stb_image_write.h https://raw.githubusercontent.com/nothings/stb/refs/heads/master/stb_image_write.h
-echo "Done"
+echo
 
 echo "Invoking premake5"
 premake5 gmake2
-echo "Done"
