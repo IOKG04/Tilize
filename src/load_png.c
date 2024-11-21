@@ -56,7 +56,7 @@ int load_png(rgb24_texture_t *restrict texture, const char *png_path){
     // create texture
     if(rgb24_texture_create(texture, img_width, img_height)){
         fprintf(stderr, "Failed to create texture in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        free(img_data);
+        stbi_image_free(img_data);
         return 1;
     }
 
@@ -68,7 +68,7 @@ int load_png(rgb24_texture_t *restrict texture, const char *png_path){
     }
 
     // clean and return
-    free(img_data);
+    stbi_image_free(img_data);
     return 0;
 }
 // saves texture at png_path

@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <SDL2/SDL.h>
+#include <time.h>
 #include "application.h"
 #include "atlas.h"
 #include "get_threads.h"
@@ -186,7 +186,7 @@ int main(int argc, const char **argv){
             char yN = getchar();
             if(!(yN == 'y' || yN == 'Y')){
                 fprintf(stderr, "Not overwriting %s, exiting\n", flag_config.file_outp_path);
-                return EXIT_FAILURE; // or should this be EXIT_SUCCESS? it fails in the way that it didnt tilize, it succeeds in the way it obeyed the user
+                return EXIT_SUCCESS;
             }
             while(getchar() != '\n');
         }
@@ -194,13 +194,6 @@ int main(int argc, const char **argv){
     else{
         // option not provided
         flag_config.file_outp_path = NULL;
-    }
-
-    // initialize SDL
-    if(SDL_Init(SDL_INIT_VIDEO)){
-        fprintf(stderr, "Failed to initialize SDL in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
-        return_code = EXIT_FAILURE;
-        goto _clean_and_exit;
     }
 
     // load input image
@@ -218,21 +211,34 @@ int main(int argc, const char **argv){
         goto _clean_and_exit;
     }
 
+    // record start time in ms
+    struct timespec ts;
+    if(!timespec_get(&ts, TIME_UTC)){
+        fprintf(stderr, "Failed to get process_start_ms with timespec_get() in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        printf("Please ignore the \"Finished in\" time as it will be inaccurate\n");
+    }
+    long long unsigned process_start_ms = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+
     // do the thing
     if(application_setup(&tilize_config, &flag_config)){
         fprintf(stderr, "Failed to setup application in %s, %s, %i\n", __FILE__, __func__, __LINE__);
         return_code = EXIT_FAILURE;
         goto _clean_and_exit;
     }
-    Uint64 process_start = SDL_GetTicks64();
     if(application_process(&input_image)){
         fprintf(stderr, "Failed to process input_image in %s, %s, %i\n", __FILE__, __func__, __LINE__);
         return_code = EXIT_FAILURE;
         goto _clean_and_exit;
     }
-    Uint64 process_end   = SDL_GetTicks64();
-    printf("Finished in %llu ms\n", (long long unsigned)(process_end - process_start));
     application_free();
+
+    // record end time in ms and print difference to start time
+    if(!timespec_get(&ts, TIME_UTC)){
+        fprintf(stderr, "Failed to get process_end_ms with timespec_get() in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        printf("Please ignore the \"Finished in\" time as it will be inaccurate\n");
+    }
+    long long unsigned process_end_ms = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+    printf("Finished in %llu ms\n", (long long unsigned)(process_end_ms - process_start_ms));
 
     // wait to exit
     while(getchar() != '\n');
@@ -241,7 +247,6 @@ int main(int argc, const char **argv){
     _clean_and_exit:;
     gui_free();
     rgb24_texture_destroy(&input_image);
-    SDL_Quit();
     return return_code;
 }
 

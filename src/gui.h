@@ -34,7 +34,6 @@
 #ifndef GUI_H__
 #define GUI_H__
 
-#include <SDL2/SDL_surface.h>
 #include "rgb24.h"
 #include "texture.h"
 

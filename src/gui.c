@@ -51,6 +51,12 @@ static mtx_t         render_mtx,
 
 // sets up gui to render an image of size {width, height} and multiply its size by scalar for showing
 int gui_setup(int width, int height, int scalar){
+    // initialize SDL
+    if(SDL_Init(SDL_INIT_VIDEO)){
+        fprintf(stderr, "Failed to initialize SDL in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
+        return 1;
+    }
+
     // create window
     gui_window = SDL_CreateWindow("Tilize", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width * scalar, height * scalar, SDL_WINDOW_SHOWN);
     if(!gui_window){
@@ -107,6 +113,7 @@ void gui_free(){
     }
     if(gui_renderer) SDL_DestroyRenderer(gui_renderer);
     if(gui_window) SDL_DestroyWindow(gui_window);
+    SDL_Quit();
 }
 
 // renders current visuals to the window
