@@ -83,6 +83,9 @@ STB_IMAGE_H_URL := https://raw.githubusercontent.com/nothings/stb/refs/heads/mas
 ifeq ($(filter $(STB_IMAGE_H),$(HEADERS)),)
 	HEADERS += $(STB_IMAGE_H)
 endif
+$(STB_IMAGE_H):
+	@mkdir -p $(dir $(STB_IMAGE_H))
+	curl -s -o $@ $(STB_IMAGE_H_URL)
 
 # stb_image_write
 STB_IMAGE_WRITE_H     := $(SRC_DIR)/stb_image_write.h
