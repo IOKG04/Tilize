@@ -33,7 +33,6 @@
 
 #include "application.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -41,6 +40,7 @@
 #include "configuration.h"
 #include "gui.h"
 #include "load_png.h"
+#include "print.h"
 #include "texture.h"
 #include "tinycthread.h"
 
@@ -83,19 +83,19 @@ int application_setup(const tilize_config_t *restrict tilize_config, const flag_
     // load pattern as texture
     rgb24_texture_t pattern_texture = RGB24_TEXTURE_NULL;
     if(load_png(&pattern_texture, pattern_path)){
-        fprintf(stderr, "Failed to load pattern_texture in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to load pattern_texture");
         return 1;
     }
 
     // create ct_i_mtx
     if(mtx_init(&ct_i_mtx, mtx_plain) != thrd_success){
-        fprintf(stderr, "Failed to initlaize ct_i_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to initialize ct_i_mtx");
         return 1;
     }
 
     // split pattern_texture into pattern_atlas and clean
     if(rgb24_atlas_from_texture(&pattern_atlas, &pattern_texture, tilize_config->tile_width, tilize_config->tile_height)){
-        fprintf(stderr, "Failed to split pattern_texture into pattern_atlas in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to split pattern_texture into pattern_atlas");
         rgb24_texture_destroy(&pattern_texture);
         return 1;
     }
@@ -105,7 +105,7 @@ int application_setup(const tilize_config_t *restrict tilize_config, const flag_
     num_colors = tilize_config->num_colors;
     colors = malloc(num_colors * sizeof(*colors));
     if(!colors){
-        fprintf(stderr, "Failed to allocate colors in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to allocate colors");
         rgb24_atlas_destroy(&pattern_atlas);
         return 1;
     }
@@ -150,7 +150,7 @@ int application_process(const rgb24_texture_t *restrict input_texture){
     // split input_texture into input_atlas
     rgb24_atlas_t input_atlas = RGB24_ATLAS_NULL;
     if(rgb24_atlas_from_texture(&input_atlas, input_texture, pattern_atlas.tile_width, pattern_atlas.tile_height)){
-        fprintf(stderr, "Failed to split input_texture into input_atlas in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to split input_texture into input_atlas");
         return 1;
     }
 
@@ -166,12 +166,12 @@ int application_process(const rgb24_texture_t *restrict input_texture){
     if(num_threads > 1){
         process_threads = malloc((num_threads - 1) * sizeof(thrd_t));
         if(!process_threads){
-            fprintf(stderr, "Failed to allocate process_threads in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to allocate process_threads");
             goto _main_process;
         }
         for(int i = 0; i < num_threads - 1; ++i){
             if(thrd_create(&process_threads[i], &process_loop, &input_atlas) != thrd_success){
-                fprintf(stderr, "Failed to initialize process_threads[%i] in %s, %s, %i\n", i, __FILE__, __func__, __LINE__);
+                VERRPRINTF(0, "Failed to initialize process_threads[%i]", i);
                 goto _main_process;
             }
         }
@@ -194,12 +194,12 @@ int application_process(const rgb24_texture_t *restrict input_texture){
     if(output_file){
         rgb24_texture_t output_texture = RGB24_TEXTURE_NULL;
         if(rgb24_texture_from_atlas(&output_texture, &input_atlas)){
-            fprintf(stderr, "Failed to generate output_texture from input_atlas in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to generate output_texture from input_atlas");
             rgb24_atlas_destroy(&input_atlas);
             return 1;
         }
         if(save_png(output_file, &output_texture)){
-            fprintf(stderr, "Failed to save output_texture to %s in %s, %s, %i\n", output_file, __FILE__, __func__, __LINE__);
+            VERRPRINTF(0, "Failed to save output_texture to %s", output_file);
             rgb24_texture_destroy(&output_texture);
             rgb24_atlas_destroy(&input_atlas);
             return 1;
@@ -215,13 +215,13 @@ int application_process(const rgb24_texture_t *restrict input_texture){
 // increments ct_i and returns its previous value
 static int ct_i_increment(){
     if(mtx_lock(&ct_i_mtx) != thrd_success){
-        fprintf(stderr, "Failed to lock ct_i_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to lock ct_i_mtx");
         return -1;
     }
     int outp = __ct_i;
     ++__ct_i;
     if(mtx_unlock(&ct_i_mtx) != thrd_success){
-        fprintf(stderr, "Failed to unlock ct_i_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to unlock ct_i_mtx");
         return -1;
     }
     return outp;
@@ -258,7 +258,7 @@ static int process_loop(void *input_atlas_void){
         // colorize best tile
         rgb24_texture_t best_pattern_colorized = RGB24_TEXTURE_NULL;
         if(rgb24_atlas_get_tile(&best_pattern_colorized, &pattern_atlas, lowest_pt % pattern_atlas.tile_amount_x, lowest_pt / pattern_atlas.tile_amount_x)){
-            fprintf(stderr, "Failed to get best_pattern_colorized (lowest_pt = %i) from pattern_atlas in %s, %s, %i\n", lowest_pt, __FILE__, __func__, __LINE__);
+            VERRPRINTF(0, "Failed to get best_pattern_colorized (lowest_pt = %i) from pattern_atlas", lowest_pt);
             return 1;
         }
         for(int i = 0; i < best_pattern_colorized.width * best_pattern_colorized.height; ++i){

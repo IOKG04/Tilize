@@ -38,6 +38,7 @@
 #include <string.h>
 #include <math.h>
 #include "cJSON.h"
+#include "print.h"
 
 // json names for different things
 // made using macros so no typos can occur
@@ -55,25 +56,25 @@ int tilize_config_serialize(char **serialized, const tilize_config_t *restrict c
     // create root object
     cJSON *root = cJSON_CreateObject();
     if(!root){
-        fprintf(stderr, "Failed to create root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to create root");
         return 1;
     }
 
     // add pattern_path
     if(!cJSON_AddStringToObject(root, PATTERN_PATH, config->pattern_path)){
-        fprintf(stderr, "Failed to add pattern_path to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to add pattern_path to root");
         retcode = 1;
         goto _clean_and_exit;
     }
 
     // add tile_width and tile_height
     if(!cJSON_AddNumberToObject(root, TILE_WIDTH, config->tile_width)){
-        fprintf(stderr, "Failed to add tile_width to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to add tile_width to root");
         retcode = 1;
         goto _clean_and_exit;
     }
     if(!cJSON_AddNumberToObject(root, TILE_HEIGHT, config->tile_height)){
-        fprintf(stderr, "Failed to add tile_height to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to add tile_height to root");
         retcode = 1;
         goto _clean_and_exit;
     }
@@ -83,7 +84,7 @@ int tilize_config_serialize(char **serialized, const tilize_config_t *restrict c
     // add colors
     cJSON *colors = cJSON_AddArrayToObject(root, COLORS);
     if(!colors){
-        fprintf(stderr, "Failed to add colors to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to add colors to root");
         retcode = 1;
         goto _clean_and_exit;
     }
@@ -93,12 +94,12 @@ int tilize_config_serialize(char **serialized, const tilize_config_t *restrict c
         sprintf(color_hex, "%02x%02x%02x", config->colors[i].r, config->colors[i].g, config->colors[i].b);
         cJSON *ccolor = cJSON_CreateString(color_hex);
         if(!ccolor){
-            fprintf(stderr, "Failed to create ccolor %i in %s, %s, %i\n", i, __FILE__, __func__, __LINE__);
+            VERRPRINTF(0, "Failed to create ccolor %i", i);
             retcode = 1;
             goto _clean_and_exit;
         }
         if(!cJSON_AddItemToArray(colors, ccolor)){
-            fprintf(stderr, "Failed to add ccolor %i to colors in %s, %s, %i\n", i, __FILE__, __func__, __LINE__);
+            VERRPRINTF(0, "Failed to add ccolor %i to colors", i);
             cJSON_Delete(ccolor);
             retcode = 1;
             goto _clean_and_exit;
@@ -109,7 +110,7 @@ int tilize_config_serialize(char **serialized, const tilize_config_t *restrict c
     if(config->bckg_color != -1){
         cJSON *bckg_color = cJSON_AddNumberToObject(root, BCKG_COLOR, config->bckg_color);
         if(!bckg_color){
-            fprintf(stderr, "Failed to add bckg_color to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to add bckg_color to root");
             retcode = 1;
             goto _clean_and_exit;
         }
@@ -117,7 +118,7 @@ int tilize_config_serialize(char **serialized, const tilize_config_t *restrict c
     if(config->forg_color != -1){
         cJSON *forg_color = cJSON_AddNumberToObject(root, FORG_COLOR, config->forg_color);
         if(!forg_color){
-            fprintf(stderr, "Failed to add forg_color to root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to add forg_color to root");
             retcode = 1;
             goto _clean_and_exit;
         }
@@ -126,7 +127,7 @@ int tilize_config_serialize(char **serialized, const tilize_config_t *restrict c
     // print root
     *serialized = cJSON_Print(root);
     if(!serialized){
-        fprintf(stderr, "Failed to print root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to print root");
         retcode = 1;
         goto _clean_and_exit;
     }
@@ -144,26 +145,28 @@ int tilize_config_deserialize(tilize_config_t *restrict config, const char *rest
     // parse serialized
     cJSON *root = cJSON_Parse(serialized);
     if(!root){
-        fprintf(stderr, "Failed to parse serialized in %s, %s, %i:\n%128s\n", __FILE__, __func__, __LINE__, cJSON_GetErrorPtr());
+        if(get_verbosity() >= 0) fprintf(stderr, "Failed to parse serialized in %s, %s, %i:\n%256s\n", __FILE__, __func__, __LINE__, cJSON_GetErrorPtr());
+        VPRINT(1, "If you are encountering this, the file you put after `-c` is not a tilize configuration file.\n");
         return 1;
     }
 
     // get pattern_path
     cJSON *pattern_path = cJSON_GetObjectItem(root, PATTERN_PATH);
     if(!pattern_path){
-        fprintf(stderr, "Failed to get pattern_path from root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to get pattern_path from root");
+        VPRINT(1, "If you are encountering this, the file you put after `-c` is not a tilize configuration file.\n");
         retcode = 1;
         goto _clean_and_exit;
     }
     const char *whycantgetstringvaluejustreturnacopyonitsown = cJSON_GetStringValue(pattern_path);
     if(!whycantgetstringvaluejustreturnacopyonitsown){
-        fprintf(stderr, "Failed to get whycantgetstringvaluejustreturnacopyonitsown from pattern_path in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to get whycantgetstringvaluejustreturnacopyonitsown from pattern_path");
         retcode = 1;
         goto _clean_and_exit;
     }
     config->pattern_path = malloc(strlen(whycantgetstringvaluejustreturnacopyonitsown) + 1);
     if(!config->pattern_path){
-        fprintf(stderr, "Failed to allocate config->pattern_path is %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to allocate config->pattern_path");
         retcode = 1;
         goto _clean_and_exit;
     }
@@ -172,26 +175,28 @@ int tilize_config_deserialize(tilize_config_t *restrict config, const char *rest
     // get tile_width and tile_height
     cJSON *tile_width = cJSON_GetObjectItem(root, TILE_WIDTH);
     if(!tile_width){
-        fprintf(stderr, "Failed to get tile_width from root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to get tile_width from root");
+        VPRINT(1, "If you are encountering this, the file you put after `-c` is not a tilize configuration file.\n");
         retcode = 1;
         goto _clean_and_exit;
     }
     temp = cJSON_GetNumberValue(tile_width);
     if(isnan(temp)){
-        fprintf(stderr, "Failed to get tile_width from tile_width in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to get tile_width from tile_width");
         retcode = 1;
         goto _clean_and_exit;
     }
     config->tile_width = temp;
     cJSON *tile_height = cJSON_GetObjectItem(root, TILE_HEIGHT);
     if(!tile_height){
-        fprintf(stderr, "Failed to get tile_height from root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to get tile_height from root");
+        VPRINT(1, "If you are encountering this, the file you put after `-c` is not a tilize configuration file.\n");
         retcode = 1;
         goto _clean_and_exit;
     }
     temp = cJSON_GetNumberValue(tile_height);
     if(isnan(temp)){
-        fprintf(stderr, "Failed to get tile_height from tile_height in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to get tile_height from tile_height");
         retcode = 1;
         goto _clean_and_exit;
     }
@@ -200,14 +205,15 @@ int tilize_config_deserialize(tilize_config_t *restrict config, const char *rest
     // get colors and num_colors
     cJSON *colors = cJSON_GetObjectItem(root, COLORS);
     if(!colors){
-        fprintf(stderr, "Failed to get colors from root in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to get colors from root");
+        VPRINT(1, "If you are encountering this, the file you put after `-c` is not a tilize configuration file.\n");
         retcode = 1;
         goto _clean_and_exit;
     }
     config->num_colors = cJSON_GetArraySize(colors);
     config->colors = malloc(config->num_colors * sizeof(*config->colors));
     if(!config->colors){
-        fprintf(stderr, "Failed to allocate config->colors in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to allocate config->colors");
         retcode = 1;
         goto _clean_and_exit;
     }
@@ -216,7 +222,8 @@ int tilize_config_deserialize(tilize_config_t *restrict config, const char *rest
     cJSON_ArrayForEach(ccolor, colors){
         const char *color_hex = cJSON_GetStringValue(ccolor);
         if(!color_hex){
-            fprintf(stderr, "Failed to get color_hex %i from ccolor in %s, %s, %i\n", i, __FILE__, __func__, __LINE__);
+            VERRPRINTF(0, "Failed to get color_hex %i from ccolor", i);
+            VPRINT(1, "If you are encountering this, the file you put after `-c` is not a tilize configuration file.\n");
             retcode = 1;
             goto _clean_and_exit;
         }

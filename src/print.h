@@ -31,28 +31,27 @@
 | SOFTWARE.                                      |
 \************************************************/
 
-#ifndef GUI_H__
-#define GUI_H__
+#ifndef PRINT_H__
+#define PRINT_H__
 
-#ifndef GUI_SUPPORTED
-    #define GUI_SUPPORTED 0
+#include <stdio.h>
+
+// print to stdout if verbosity is at least min_verb
+#define VPRINT(min_verb, str)       if(get_verbosity() >= min_verb) printf(str)
+#define VPRINTF(min_verb, str, ...) if(get_verbosity() >= min_verb) printf(str, __VA_ARGS__)
+
+// print to stderr with line, function and file information if verbosity is at least min_verb and if NDEBUG is undefined or zero
+#if NDEBUG
+    #define VERRPRINT(min_verb, str)
+    #define VERRPRINTF(min_verb, str, ...)
+#else
+    #define VERRPRINT(min_verb, str)       if(get_verbosity() >= min_verb) fprintf(stderr, str " in %s, %s, %i\n", __FILE__, __func__, __LINE__)
+    #define VERRPRINTF(min_verb, str, ...) if(get_verbosity() >= min_verb) fprintf(stderr, str " in %s, %s, %i\n", __VA_ARGS__, __FILE__, __func__, __LINE__)
 #endif
 
-#include "rgb24.h"
-#include "texture.h"
-
-// sets up gui to render an image of size {width, height} and multiply its size by scalar for showing
-int gui_setup(int width, int height, int scalar);
-// frees everything gui uses
-void gui_free();
-
-// renders current visuals to the window
-int gui_present();
-
-// sets pixel at {x, y} of gui's internal buffer to color
-int gui_set_px(int x, int y, rgb24_t color);
-// renders texture to gui's internal buffer at {x, y}
-// returns amount of pixels not rendered
-int gui_render_texture(int x, int y, const rgb24_texture_t *texture);
+// gets current verbosity
+int get_verbosity();
+// sets verbosity
+void set_verbosity(int v);
 
 #endif

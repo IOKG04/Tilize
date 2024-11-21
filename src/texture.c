@@ -33,8 +33,8 @@
 
 #include "texture.h"
 
-#include <stdio.h>
 #include <stdlib.h>
+#include "print.h"
 
 // creates a new texture
 int rgb24_texture_create(rgb24_texture_t *texture, int width, int height){
@@ -42,7 +42,7 @@ int rgb24_texture_create(rgb24_texture_t *texture, int width, int height){
     texture->height = height;
     texture->data = malloc(width * height * sizeof(*texture->data));
     if(!texture->data){
-        fprintf(stderr, "Failed to allocate space for texture->data in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to allocate texture->data");
         return 1;
     }
     return 0;
@@ -63,7 +63,7 @@ int rgb24_texture_resize(rgb24_texture_t *texture, int new_width, int new_height
 
     // create new texture
     if(rgb24_texture_create(texture, new_width, new_height)){
-        fprintf(stderr, "Failed to create new texture in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to create new texture");
         *texture = prev;
         return 1;
     }

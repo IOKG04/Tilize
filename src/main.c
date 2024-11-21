@@ -41,6 +41,7 @@
 #include "get_threads.h"
 #include "gui.h"
 #include "load_png.h"
+#include "print.h"
 #include "rgb24.h"
 #include "texture.h"
 
@@ -70,7 +71,7 @@ int main(int argc, const char **argv){
     int option_index;
 
     // check if the user used too few arguments or if help is requested
-    if(argc < 2 || option_provided(argc, argv, "help", NULL)){
+    if(argc < 2 || option_provided(argc, argv, "help", NULL) || option_provided(argc, argv, "--help", NULL) || option_provided(argc, argv, "-h", NULL)){
         printf("%s", help_msg);
         return EXIT_SUCCESS;
     }
@@ -81,36 +82,36 @@ int main(int argc, const char **argv){
     if(option_provided(argc, argv, "-c", &option_index)){
         // config file provided
         if(argc <= option_index + 1){
-            fprintf(stderr, "Cannot try opening config_file because `-c` was given as the last argument");
+            VPRINT(1, "Cannot try opening config_file because `-c` was given as the last argument");
             return EXIT_FAILURE;
         }
         FILE *config_file = fopen(argv[option_index + 1], "r");
         if(!config_file){
-            fprintf(stderr, "Failed to open config_file in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to open config_file");
             return EXIT_FAILURE;
         }
         if(fseek(config_file, 0, SEEK_END)){
-            fprintf(stderr, "Failed to seek to end of config_file in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to seek to end of config_file");
             fclose(config_file);
             return EXIT_FAILURE;
         }
         long config_file_size = ftell(config_file);
         if(config_file_size == -1L){
-            fprintf(stderr, "Failed to tell position in config_file in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to tell position in config_file");
             fclose(config_file);
             return EXIT_FAILURE;
         }
         rewind(config_file);
         char *config_text = calloc(config_file_size + 16, sizeof(char));
         if(!config_text){
-            fprintf(stderr, "Failed to allocate config_text in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to allocate config_text");
             fclose(config_file);
             return EXIT_FAILURE;
         }
         fread(config_text, sizeof(char), config_file_size + 8, config_file);
         fclose(config_file);
         if(tilize_config_deserialize(&tilize_config, config_text)){
-            fprintf(stderr, "Failed to deserialize config in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to deserialize config");
             free(config_text);
             return EXIT_FAILURE;
         }
@@ -118,7 +119,7 @@ int main(int argc, const char **argv){
 
         flag_config.config_path = strdup_exceptmyversionsobettercauseitisntc23exclusive(argv[option_index + 1]);
         if(!flag_config.config_path){
-            fprintf(stderr, "Failed to duplicate to flag_config.config_path in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to duplicate `-c` path to flag_config.config_path");
             return EXIT_FAILURE;
         }
     }
@@ -132,7 +133,7 @@ int main(int argc, const char **argv){
         tilize_config.num_colors   = 2;
         tilize_config.colors       = malloc(2 * sizeof(*tilize_config.colors));
         if(!tilize_config.colors){
-            fprintf(stderr, "Failed to allocate colors int %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to allocate colors");
             return EXIT_FAILURE;
         }
         tilize_config.colors[0]    = RGB24(0x00,0x00,0x00);
@@ -148,7 +149,7 @@ int main(int argc, const char **argv){
             // -j= option, specified thread count
             flag_config.num_threads = atoi(&argv[option_index][3]);
             if(flag_config.num_threads <= 0){
-                fprintf(stderr, "Cannot run with non positive amount of threads. Please use a positive number for `-j`\n");
+                VPRINT(1, "Cannot run with non positive amount of threads. Please use a positive number for `-j`\n");
                 return EXIT_FAILURE;
             }
         }
@@ -157,11 +158,11 @@ int main(int argc, const char **argv){
             #if GET_THREADS_SUPPORTED
                 flag_config.num_threads = get_thread_count();
                 if(flag_config.num_threads < 0){
-                    fprintf(stderr, "Failed to get thread count in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+                    VERRPRINT(0, "Failed to get thread count");
                     return EXIT_FAILURE;
                 }
             #else
-                fprintf(stderr, "Your system does not currently support the `-j` option. Please use `-j=` instead.\n");
+                VPRINT(1, "Your system does not currently support the `-j` option. Please use `-j=` instead.\n");
                 return EXIT_FAILURE;
             #endif
         }
@@ -175,7 +176,7 @@ int main(int argc, const char **argv){
     if(option_provided(argc, argv, "-o", &option_index)){
         // option provided
         if(argc <= option_index + 1){
-            fprintf(stderr, "Cannot try writing to output file because `-o` was given as the last argument");
+            VPRINT(1, "Cannot try writing to output file because `-o` was given as the last argument\n");
             return EXIT_FAILURE;
         }
         flag_config.file_outp_path = argv[option_index + 1];
@@ -185,7 +186,7 @@ int main(int argc, const char **argv){
             printf("Warning: %s already exists. Overwrite (y / N)?\n", flag_config.file_outp_path);
             char yN = getchar();
             if(!(yN == 'y' || yN == 'Y')){
-                fprintf(stderr, "Not overwriting %s, exiting\n", flag_config.file_outp_path);
+                VPRINTF(1, "Not overwriting %s, existing\n", flag_config.file_outp_path);
                 return EXIT_SUCCESS;
             }
             while(getchar() != '\n');
@@ -199,7 +200,7 @@ int main(int argc, const char **argv){
     // load input image
     rgb24_texture_t input_image = RGB24_TEXTURE_NULL;
     if(load_png(&input_image, argv[argc - 1])){
-        fprintf(stderr, "Failed to load input_image in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to load input_image");
         return_code = EXIT_FAILURE;
         goto _clean_and_exit;
     }
@@ -207,7 +208,7 @@ int main(int argc, const char **argv){
     #if GUI_SUPPORTED
         // initialize gui
         if(gui_setup(input_image.width, input_image.height, 1)){
-            fprintf(stderr, "Failed to initialize gui in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to initialize gui");
             return_code = EXIT_FAILURE;
             goto _clean_and_exit;
         }
@@ -216,19 +217,19 @@ int main(int argc, const char **argv){
     // record start time in ms
     struct timespec ts;
     if(!timespec_get(&ts, TIME_UTC)){
-        fprintf(stderr, "Failed to get process_start_ms with timespec_get() in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        printf("Please ignore the \"Finished in\" time as it will be inaccurate\n");
+        VERRPRINT(1, "Failed to get process_start_ms with timespec_get()");
+        VPRINT(1, "Please ignore the \"Finished in\" time as it will be inaccurate\n");
     }
     long long unsigned process_start_ms = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 
     // do the thing
     if(application_setup(&tilize_config, &flag_config)){
-        fprintf(stderr, "Failed to setup application in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to setup application");
         return_code = EXIT_FAILURE;
         goto _clean_and_exit;
     }
     if(application_process(&input_image)){
-        fprintf(stderr, "Failed to process input_image in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to process input_image");
         return_code = EXIT_FAILURE;
         goto _clean_and_exit;
     }
@@ -236,11 +237,11 @@ int main(int argc, const char **argv){
 
     // record end time in ms and print difference to start time
     if(!timespec_get(&ts, TIME_UTC)){
-        fprintf(stderr, "Failed to get process_end_ms with timespec_get() in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        printf("Please ignore the \"Finished in\" time as it will be inaccurate\n");
+        VERRPRINT(1, "Failed to get process_end_ms with timespec_get()");
+        VPRINT(1, "Please ignore the \"Finished in\" time as it will be inaccurate\n");
     }
     long long unsigned process_end_ms = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-    printf("Finished in %llu ms\n", (long long unsigned)(process_end_ms - process_start_ms));
+    VPRINTF(1, "Finished in %llu ms\n", (long long unsigned)(process_end_ms - process_start_ms));
 
     #if GUI_SUPPORTED
         // wait to exit
@@ -275,7 +276,7 @@ static char *strdup_exceptmyversionsobettercauseitisntc23exclusive(const char *r
     size_t src_len = strlen(src) + 1;
     char *outp = malloc(src_len);
     if(!outp){
-        fprintf(stderr, "Failed to allocate outp in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to allocate outp");
         return NULL;
     }
     strncpy(outp, src, src_len);

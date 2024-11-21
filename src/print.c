@@ -31,28 +31,20 @@
 | SOFTWARE.                                      |
 \************************************************/
 
-#ifndef GUI_H__
-#define GUI_H__
+#include "print.h"
 
-#ifndef GUI_SUPPORTED
-    #define GUI_SUPPORTED 0
+#ifndef DEFAULT_VERBOSITY
+    #define DEFAULT_VERBOSITY 1
 #endif
 
-#include "rgb24.h"
-#include "texture.h"
+// current verbosity
+static int verbosity = DEFAULT_VERBOSITY;
 
-// sets up gui to render an image of size {width, height} and multiply its size by scalar for showing
-int gui_setup(int width, int height, int scalar);
-// frees everything gui uses
-void gui_free();
-
-// renders current visuals to the window
-int gui_present();
-
-// sets pixel at {x, y} of gui's internal buffer to color
-int gui_set_px(int x, int y, rgb24_t color);
-// renders texture to gui's internal buffer at {x, y}
-// returns amount of pixels not rendered
-int gui_render_texture(int x, int y, const rgb24_texture_t *texture);
-
-#endif
+// gets current verbosity
+int get_verbosity(){
+    return verbosity;
+}
+// sets verbosity
+void set_verbosity(int v){
+    verbosity = v;
+}

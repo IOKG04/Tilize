@@ -35,7 +35,6 @@
 #define RBG24_H__
 
 #include <stdint.h>
-#include <stddef.h>
 
 // a color value
 typedef struct rgb24_t{

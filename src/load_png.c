@@ -33,9 +33,9 @@
 
 #include "load_png.h"
 
-#include <stdio.h>
 #include <stddef.h>
 #include <string.h>
+#include "print.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
 #include "texture.h"
@@ -49,13 +49,13 @@ int load_png(rgb24_texture_t *restrict texture, const char *png_path){
     int img_width, img_height;
     unsigned char *img_data = stbi_load(png_path, &img_width, &img_height, NULL, STBI_rgb);
     if(!img_data){
-        fprintf(stderr, "Failed to load image in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, stbi_failure_reason());
+        VERRPRINT(0, "Failed to load image");
         return 1;
     }
 
     // create texture
     if(rgb24_texture_create(texture, img_width, img_height)){
-        fprintf(stderr, "Failed to create texture in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to create texture");
         stbi_image_free(img_data);
         return 1;
     }
@@ -80,18 +80,18 @@ int save_png(const char *png_path, const rgb24_texture_t *restrict texture){
             strendswith(png_path, ".jpeg")) image_format = IF_JPG;
     else if(strendswith(png_path, ".bmp"))  image_format = IF_BMP;
     else{
-        fprintf(stderr, "Image format not recognized in %s, %s, %i\n", __FILE__, __func__, __LINE__);
-        fprintf(stderr, "If you are a user encountering this, please change the ending of you output file to one of\n");
-        fprintf(stderr, " .png\n");
-        fprintf(stderr, " .jpg\n");
-        fprintf(stderr, " .bmp\n");
+        VERRPRINT(0, "Image format not recognized");
+        VPRINT(1, "If you are encountering this, please change the ending of your output file to one of\n"
+                  " .png\n"
+                  " .jpg\n"
+                  " .bmp\n");
         return 1;
     }
 
     // copy data to format stb_image_write understands
     unsigned char *img_data = malloc(texture->width * texture->height * 3 * sizeof(unsigned char));
     if(!img_data){
-        fprintf(stderr, "Failed to allocate img_data in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to allocate img_data");
         return 1;
     }
     for(int i = 0; i < texture->width * texture->height; ++i){
@@ -104,27 +104,27 @@ int save_png(const char *png_path, const rgb24_texture_t *restrict texture){
     switch(image_format){
         case IF_PNG:
             if(!stbi_write_png(png_path, texture->width, texture->height, STBI_rgb, img_data, texture->width * 3)){
-                fprintf(stderr, "Failed to save png in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+                VERRPRINT(0, "Failed to save png");
                 free(img_data);
                 return 1;
             }
             break;
         case IF_JPG:
             if(!stbi_write_jpg(png_path, texture->width, texture->height, STBI_rgb, img_data, 100)){
-                fprintf(stderr, "Failed to save jpg in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+                VERRPRINT(0, "Failed to save jpg");
                 free(img_data);
                 return 1;
             }
             break;
         case IF_BMP:
             if(!stbi_write_bmp(png_path, texture->width, texture->height, STBI_rgb, img_data)){
-                fprintf(stderr, "Failed to save bmp in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+                VERRPRINT(0, "Failed to save bmp");
                 free(img_data);
                 return 1;
             }
             break;
         default:
-            fprintf(stderr, "Encountered unknown value for image_format (%i) in %s, %s, %i\n", image_format, __FILE__, __func__, __LINE__);
+            VERRPRINTF(0, "Encountered unknown value for image_format (%i)", image_format);
             free(img_data);
             return 1;
     }

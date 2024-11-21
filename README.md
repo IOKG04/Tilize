@@ -22,8 +22,12 @@ Options:
  -o [file]                              | Save output to [file]
  -c [file]                              | Use [file] as configuration
  -j[=number]                            | Use multiple threads ([number] if provided, otherwise maximum amount available)
- -s                                     | Don't show GUI (---)
- -v                                     | Print extra info (---)
+ -q                                     | Don't show GUI (---)
+ -v[=number]                            | Print extra info (---)
+                                        | -1          : Print nothing besides stuff to interact with the user
+                                        | 0           : Print only errors (if !NDEBUG)
+                                        | 1 (default) : Print errors, warnings and process time
+                                        | [more to come]
 
 If the same option is provided multiple times, the last one is used.
 ```

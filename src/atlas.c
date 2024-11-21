@@ -33,9 +33,9 @@
 
 #include "atlas.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "print.h"
 
 // creates a new atlas
 // if total_width or total_height == -1, they are automatically added in
@@ -53,13 +53,13 @@ int rgb24_atlas_create(rgb24_atlas_t *atlas, int tile_width, int tile_height, in
     // allocations :3
     atlas->data = malloc(tile_amount_x * tile_amount_y * sizeof(rgb24_t *));
     if(!atlas->data){
-        fprintf(stderr, "Failed to allocate atlas->data in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to allocate atlas->data");
         return 1;
     }
     for(int i = 0; i < tile_amount_x * tile_amount_y; ++i){
         atlas->data[i] = malloc(tile_width * tile_height * sizeof(*atlas->data[i]));
         if(!atlas->data[i]){
-            fprintf(stderr, "Failed to allocate atlas->data[i] in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINTF(0, "Failed to allocate atlas->data[%i]", i);
             return 1;
         }
     }
@@ -89,7 +89,7 @@ void rgb24_atlas_destroy(rgb24_atlas_t *atlas){
 int rgb24_texture_from_atlas(rgb24_texture_t *restrict texture, const rgb24_atlas_t *restrict atlas){
     // create texture
     if(rgb24_texture_create(texture, atlas->total_width, atlas->total_height)){
-        fprintf(stderr, "Failed to initialize texture in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to initialize texture");
         return 1;
     }
 
@@ -116,7 +116,7 @@ int rgb24_atlas_from_texture(rgb24_atlas_t *restrict atlas, const rgb24_texture_
     const int tile_amount_x = (int)ceil(texture->width / (double)tile_width),
               tile_amount_y = (int)ceil(texture->height / (double)tile_height);
     if(rgb24_atlas_create(atlas, tile_width, tile_height, tile_amount_x, tile_amount_y, texture->width, texture->height)){
-        fprintf(stderr, "Failed to create texture in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to create texture");
         return 1;
     }
 
@@ -145,7 +145,7 @@ int rgb24_atlas_from_texture(rgb24_atlas_t *restrict atlas, const rgb24_texture_
 int rgb24_atlas_get_tile(rgb24_texture_t *restrict tile_texture, const rgb24_atlas_t *restrict atlas, int x, int y){
     // create tile_texture
     if(rgb24_texture_create(tile_texture, atlas->tile_width, atlas->tile_height)){
-        fprintf(stderr, "Failed to create tile_texture in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+        VERRPRINT(0, "Failed to create tile_texture");
         return 1;
     }
 

@@ -34,9 +34,9 @@
 #include "gui.h"
 
 #if GUI_SUPPORTED
-    #include <stdio.h>
     #include <stdint.h>
     #include <SDL2/SDL.h>
+    #include "print.h"
     #include "rgb24.h"
     #include "texture.h"
     #include "tinycthread.h"
@@ -54,28 +54,28 @@
     int gui_setup(int width, int height, int scalar){
         // initialize SDL
         if(SDL_Init(SDL_INIT_VIDEO)){
-            fprintf(stderr, "Failed to initialize SDL in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
+            if(get_verbosity() >= 0) fprintf(stderr, "Failed to initialize SDL in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
             return 1;
         }
 
         // create window
         gui_window = SDL_CreateWindow("Tilize", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width * scalar, height * scalar, SDL_WINDOW_SHOWN);
         if(!gui_window){
-            fprintf(stderr, "Failed to create gui_window in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
+            if(get_verbosity() >= 0) fprintf(stderr, "Failed to create gui_window in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
             return 1;
         }
 
         // create renderer
         gui_renderer = SDL_CreateRenderer(gui_window, -1, 0);
         if(!gui_renderer){
-            fprintf(stderr, "Failed to create gui_renderer in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
+            if(get_verbosity() >= 0) fprintf(stderr, "Failed to create gui_renderer in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
             return 1;
         }
 
         // create surface
         gui_surface = SDL_CreateRGBSurface(0, width, height, 32, 0xff0000, 0x00ff00, 0x0000ff, 0);
         if(!gui_surface){
-            fprintf(stderr, "Failed to create gui_surface in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
+            if(get_verbosity() >= 0) fprintf(stderr, "Failed to create gui_surface in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
             return 1;
         }
 
@@ -85,11 +85,11 @@
 
         // initialize mutexes
         if(mtx_init(&render_mtx, mtx_plain) != thrd_success){
-            fprintf(stderr, "Failed to initialize render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to initialize render_mtx");
             return 1;
         }
         if(mtx_init(&present_mtx, mtx_plain) != thrd_success){
-            fprintf(stderr, "Failed to initialize present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to initialize present_mtx");
             return 1;
         }
 
@@ -99,7 +99,7 @@
             pixels[i] = 0;
         }
         if(gui_present()){
-            fprintf(stderr, "Failed to render black scene in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to render black scene");
         }
 
         return 0;
@@ -122,14 +122,14 @@
         int trylock_success = mtx_trylock(&present_mtx);
         if(trylock_success == thrd_busy) return 0;
         if(trylock_success != thrd_success){
-            fprintf(stderr, "Failed to lock present_mtx for some reason that isn't it being busy in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to lock present_mtx for some reason that isn't it being busy");
             return 1;
         }
 
         if(mtx_lock(&render_mtx) != thrd_success){
-            fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to lock render_mtx");
             if(mtx_unlock(&present_mtx) != thrd_success){
-                fprintf(stderr, "Failed to unlock present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+                VERRPRINT(0, "Failed to unlock present_mtx");
             }
             return 1;
         }
@@ -137,20 +137,20 @@
         // create texture to be rendered
         SDL_Texture *gui_texture = SDL_CreateTextureFromSurface(gui_renderer, gui_surface);
         if(!gui_texture){
-            fprintf(stderr, "Failed to create gui_texture in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
+            if(get_verbosity() >= 0) fprintf(stderr, "Failed to create gui_texture in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
             if(mtx_unlock(&render_mtx) != thrd_success){
-                fprintf(stderr, "Failed to unlock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+                VERRPRINT(0, "Failed to unlock render_mtx");
             }
             if(mtx_unlock(&present_mtx) != thrd_success){
-                fprintf(stderr, "Failed to unlock present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+                VERRPRINT(0, "Failed to unlock present_mtx");
             }
             return 1;
         }
         SDL_LockSurface(gui_surface);
         if(mtx_unlock(&render_mtx) != thrd_success){
-            fprintf(stderr, "Failed to unlock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to unlock render_mtx");
             if(mtx_unlock(&present_mtx) != thrd_success){
-                fprintf(stderr, "Failed to unlock present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+                VERRPRINT(0, "Failed to unlock present_mtx");
             }
             SDL_DestroyTexture(gui_texture);
             return 1;
@@ -158,7 +158,7 @@
 
         // render said texture to gui_renderer
         if(SDL_RenderCopy(gui_renderer, gui_texture, NULL, NULL)){
-            fprintf(stderr, "Failed to render gui_texture to gui_renderer in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
+            if(get_verbosity() >= 0) fprintf(stderr, "Failed to render gui_texture to gui_renderer in %s, %s, %i:\n%s\n", __FILE__, __func__, __LINE__, SDL_GetError());
             SDL_DestroyTexture(gui_texture);
             SDL_LockSurface(gui_surface);
             return 1;
@@ -170,7 +170,7 @@
         // cleanup and return
         SDL_DestroyTexture(gui_texture);
         if(mtx_unlock(&present_mtx) != thrd_success){
-            fprintf(stderr, "Failed to unlock present_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to unlock present_mtx");
             return 1;
         }
         return 0;
@@ -179,7 +179,7 @@
     // sets pixel at {x, y} of gui's internal buffer to color
     int gui_set_px(int x, int y, rgb24_t color){
         if(mtx_lock(&render_mtx) != thrd_success){
-            fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to lock render_mtx");
             return 1;
         }
 
@@ -197,7 +197,7 @@
         SDL_UnlockSurface(gui_surface);
 
         if(mtx_unlock(&render_mtx) != thrd_success){
-            fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to unlock render_mtx");
             return 1;
         }
         return 0;
@@ -206,7 +206,7 @@
     // returns amount of pixels not rendered
     int gui_render_texture(int x, int y, const rgb24_texture_t *texture){
         if(mtx_lock(&render_mtx) != thrd_success){
-            fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to lock render_mtx");
             return 1;
         }
 
@@ -233,7 +233,7 @@
         SDL_UnlockSurface(gui_surface);
 
         if(mtx_unlock(&render_mtx) != thrd_success){
-            fprintf(stderr, "Failed to lock render_mtx in %s, %s, %i\n", __FILE__, __func__, __LINE__);
+            VERRPRINT(0, "Failed to unlock render_mtx");
             return 1;
         }
         return outp;
