@@ -39,7 +39,6 @@ project "Tilize"
     targetdir "bin/%{cfg.buildcfg}_%{cfg.platform}"
 
     files { "src/**.h", "src/**.c" }
-    links { "m" }
 
     strictaliasing "Off"
     warnings "Extra"
@@ -67,3 +66,6 @@ project "Tilize"
 
     filter "toolset:gcc or toolset:clang"
         buildoptions { "-Wpedantic", "-Werror" }
+
+    filter "system:not windows"
+        links { "m" }
