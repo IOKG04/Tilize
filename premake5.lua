@@ -42,6 +42,7 @@ project "Tilize"
     links { "m" }
 
     strictaliasing "Off"
+    warnings "Extra"
 
     postbuildcommands {
         "{COPYDIR} resources/ %{cfg.buildtarget.directory}/resources/"
@@ -63,3 +64,6 @@ project "Tilize"
         includedirs { os.findheader("SDL2.h") }
         libdirs { os.findlib("SDL2") }
         links { "SDL2" }
+
+    filter "toolset:gcc or toolset:clang"
+        buildoptions { "-Wpedantic", "-Werror" }
