@@ -43,6 +43,10 @@ project "Tilize"
 
     strictaliasing "Off"
 
+    postbuildcommands {
+        "{COPYDIR} resources/ %{cfg.buildtarget.directory}/resources/"
+    }
+
     filter "configurations:Debug"
         defines { "DEBUG" }
         symbols "On"
@@ -52,10 +56,10 @@ project "Tilize"
         optimize "On"
 
     filter "platforms:NoSDL"
-        defines {"GUI_SUPPORTED=0"}
+        defines { "GUI_SUPPORTED=0" }
 
     filter "platforms:SDL"
-        defines {"GUI_SUPPORTED=1"}
+        defines { "GUI_SUPPORTED=1" }
         includedirs { os.findheader("SDL2.h") }
         libdirs { os.findlib("SDL2") }
         links { "SDL2" }

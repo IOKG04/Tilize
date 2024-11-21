@@ -5,14 +5,12 @@ if [ "$1" == "all" ]; then
     rm -f src/cJSON.*
     rm -f src/tinycthread.*
     rm -f src/stb*.h
-    echo
 fi
 
 echo "Clearing bin/"
 rm -rf bin/
 echo "Clearing obj/"
 rm -rf obj/
-echo
 
 echo "Clearing premake5 files"
 rm -f Makefile Tilize.make
