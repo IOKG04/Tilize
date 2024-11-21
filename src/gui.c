@@ -33,14 +33,14 @@
 
 #include "gui.h"
 
-#include <stdio.h>
-#include <stdint.h>
-#include <SDL2/SDL.h>
-#include "rgb24.h"
-#include "texture.h"
-#include "tinycthread.h"
-
 #if GUI_SUPPORTED
+    #include <stdio.h>
+    #include <stdint.h>
+    #include <SDL2/SDL.h>
+    #include "rgb24.h"
+    #include "texture.h"
+    #include "tinycthread.h"
+
     // gui state
     static SDL_Window   *gui_window;
     static SDL_Renderer *gui_renderer;
@@ -239,6 +239,8 @@
         return outp;
     }
 #else
+    #include <stdio.h>
+
     // dummy implementation to give warnings
     int gui_setup(int width, int height, int scalar){
         fprintf(stderr, "Warning: gui_setup() not supported at compiletime\n");
