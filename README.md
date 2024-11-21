@@ -31,20 +31,19 @@ If something is followed by `(---)`, it is not implemented yet
 
 To make configurations, a script will be provided in the "near" future.
 
-## Tips for building
+## Building
 
-There are some macros that may be defined to enable or disable specific behaviour at compiletime:
-- `GET_THREADS_SUPPORTED`: Whether or not the program can figure out the amount of available threads (used for `-j` option)
-- `GUI_SUPPORTED`: Whether or not SDL2 is accessible (to show the gui)
+To build this project, it is required that you have [premake5](https://premake.github.io/) installed.
 
-If you wish to specify, you have to give them a value of `0` or non-zero, as the conditional compilation is done using a `#if`, not a `#ifndef` or `#ifdef`.  
-A value of `0` indicates something is not supported, a non-zero value indicates it is.
+If you have it, just do what you would do with any project that uses premake. 
 
-### Makefile configurations
-
-The following configurations are in the `Makefile` for ease of use:
-- `all`: Builds with SDL2 support and figures out if `GET_THREADS_SUPPORTED` should be set at compiletime
-- `nosdl`: Builds without SDL2 support and figures out if `GET_THREADS_SUPPORTED` should be set at compiletime
+The different configurations are
+- `debug_nosdl`
+- `debug_sdl`
+- `release_nosdl`
+- `release_sdl`
+the ones ending in `nosdl` should work on any system supporting the c11 standard,
+the ones ending in `sdl` will require `SDL2` to be installed in order to show a GUI.
 
 ## Credit
 
