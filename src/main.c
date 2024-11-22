@@ -45,6 +45,8 @@
 #include "rgb24.h"
 #include "texture.h"
 
+typedef long long unsigned ms_t;
+
 static const char *help_msg = "Usage:\n"
                               " Tilize [[options]] [file]  | Tilizes [file] with [options]\n"
                               " Tilize help                | Show this message\n"
@@ -57,6 +59,11 @@ static const char *help_msg = "Usage:\n"
                           #else
                               " -j=[number]                | Use [number] threads\n"
                           #endif
+                              " -v[=number]                | Print more (or less) information\n"
+                              "                            | -1          : Print only interactive prompts\n"
+                              "                            | 0           : Print errors\n"
+                              "                            | 1 (default) : Print errors, warnings and process time\n"
+                              "                            | 2 (`-v`)    : Print errors, warnings and subprocess times\n"
                               "\n"
                               "If the same option is provided multiple times, the last one is used.\n"
                               "\n";
@@ -65,10 +72,22 @@ static const char *help_msg = "Usage:\n"
 static int option_provided(int argc, const char **argv, const char *restrict opt_name, int *restrict index);
 // makes a copy of src and returns it
 static char *strdup_exceptmyversionsobettercauseitisntc23exclusive(const char *restrict src);
+// gets current time in ms
+static ms_t current_ms();
 
 int main(int argc, const char **argv){
     int return_code = EXIT_SUCCESS;
+    tilize_config_t tilize_config = TILIZE_CONFIG_NULL;
+    flag_config_t   flag_config   = FLAG_CONFIG_NULL;
     int option_index;
+    ms_t flag_start_ms        = 0,
+         load_input_start_ms  = 0,
+         #if GUI_SUPPORTED
+             gui_start_ms     = 0,
+         #endif
+         application_start_ms = 0,
+         deinit_start_ms      = 0,
+         tilize_end_ms        = 0;
 
     // check if the user used too few arguments or if help is requested
     if(argc < 2 || option_provided(argc, argv, "help", NULL) || option_provided(argc, argv, "--help", NULL) || option_provided(argc, argv, "-h", NULL)){
@@ -76,9 +95,26 @@ int main(int argc, const char **argv){
         return EXIT_SUCCESS;
     }
 
+    // -v option, verbosity
+    if(option_provided(argc, argv, "-v", &option_index)){
+        // option provided
+        if(strlen(argv[option_index]) > 2 && argv[option_index][2] == '='){
+            // -v= option
+            int v = atoi(&argv[option_index][3]);
+            set_verbosity(v);
+        }
+        else{
+            // -v option
+            set_verbosity(2);
+        }
+    }
+
+    // flag_start_ms (tilize_start_ms), only after `-v` flag so it doesnt print if `-v=-1` is specified
+    if(get_verbosity() >= 1){
+        flag_start_ms = current_ms();
+    }
+
     // -c option, configuration
-    tilize_config_t tilize_config = TILIZE_CONFIG_NULL;
-    flag_config_t   flag_config   = FLAG_CONFIG_NULL;
     if(option_provided(argc, argv, "-c", &option_index)){
         // config file provided
         if(argc <= option_index + 1){
@@ -197,6 +233,12 @@ int main(int argc, const char **argv){
         flag_config.file_outp_path = NULL;
     }
 
+    // get load_input_start_ms
+    if(get_verbosity() >= 2){
+        load_input_start_ms = current_ms();
+        VPRINTF(2, "Finished parsing flags in %llu ms\n", (long long unsigned)(load_input_start_ms - flag_start_ms));
+    }
+
     // load input image
     rgb24_texture_t input_image = RGB24_TEXTURE_NULL;
     if(load_png(&input_image, argv[argc - 1])){
@@ -206,6 +248,12 @@ int main(int argc, const char **argv){
     }
 
     #if GUI_SUPPORTED
+        // get gui_start_ms
+        if(get_verbosity() >= 2){
+            gui_start_ms = current_ms();
+            VPRINTF(2, "Finished loading input image in %llu ms\n", (long long unsigned)(gui_start_ms - load_input_start_ms ));
+        }
+
         // initialize gui
         if(gui_setup(input_image.width, input_image.height, 1)){
             VERRPRINT(0, "Failed to initialize gui");
@@ -214,13 +262,15 @@ int main(int argc, const char **argv){
         }
     #endif
 
-    // record start time in ms
-    struct timespec ts;
-    if(!timespec_get(&ts, TIME_UTC)){
-        VERRPRINT(1, "Failed to get process_start_ms with timespec_get()");
-        VPRINT(1, "Please ignore the \"Finished in\" time as it will be inaccurate\n");
+    // get application_start_ms
+    if(get_verbosity() >= 2){
+        application_start_ms = current_ms();
+        #if GUI_SUPPORTED
+            VPRINTF(2, "Finished starting GUI in %llu ms\n", (long long unsigned)(application_start_ms - gui_start_ms));
+        #else
+            VPRINTF(2, "Finished loading input image in %llu ms\n", (long long unsigned)(application_start_ms - load_input_start_ms));
+        #endif
     }
-    long long unsigned process_start_ms = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 
     // do the thing
     if(application_setup(&tilize_config, &flag_config)){
@@ -235,13 +285,11 @@ int main(int argc, const char **argv){
     }
     application_free();
 
-    // record end time in ms and print difference to start time
-    if(!timespec_get(&ts, TIME_UTC)){
-        VERRPRINT(1, "Failed to get process_end_ms with timespec_get()");
-        VPRINT(1, "Please ignore the \"Finished in\" time as it will be inaccurate\n");
+    // get deinit_start_ms
+    if(get_verbosity() >= 2){
+        deinit_start_ms = current_ms();
+        VPRINTF(2, "Finished application in %llu ms\n", (long long unsigned)(deinit_start_ms - application_start_ms));
     }
-    long long unsigned process_end_ms = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-    VPRINTF(1, "Finished in %llu ms\n", (long long unsigned)(process_end_ms - process_start_ms));
 
     #if GUI_SUPPORTED
         // wait to exit
@@ -254,6 +302,11 @@ int main(int argc, const char **argv){
         gui_free();
     #endif
     rgb24_texture_destroy(&input_image);
+    if(return_code == EXIT_SUCCESS && get_verbosity() >= 1){
+        tilize_end_ms = current_ms();
+        VPRINTF(2, "Finished deinitialization in %llu ms\n", (long long unsigned)(tilize_end_ms - deinit_start_ms));
+        VPRINTF(1, "Finished Tilize in %llu ms\n", (long long unsigned)(tilize_end_ms - flag_start_ms));
+    }
     return return_code;
 }
 
@@ -281,4 +334,14 @@ static char *strdup_exceptmyversionsobettercauseitisntc23exclusive(const char *r
     }
     strncpy(outp, src, src_len);
     return outp;
+}
+// gets current time in ms
+static ms_t current_ms(){
+    struct timespec ts;
+    if(!timespec_get(&ts, TIME_UTC)){
+        VERRPRINT(0, "Failed to get current time");
+        VPRINT(1, "Please ignore any timing information given after this\n");
+        return 0;
+    }
+    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }

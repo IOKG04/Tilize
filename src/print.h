@@ -42,8 +42,8 @@
 
 // print to stderr with line, function and file information if verbosity is at least min_verb and if NDEBUG is undefined or zero
 #if NDEBUG
-    #define VERRPRINT(min_verb, str)
-    #define VERRPRINTF(min_verb, str, ...)
+    #define VERRPRINT(min_verb, str)       if(get_verbosity() >= min_verb) fprintf(stderr, str "\n")
+    #define VERRPRINTF(min_verb, str, ...) if(get_verbosity() >= min_verb) fprintf(stderr, str "\n", __VA_ARGS__)
 #else
     #define VERRPRINT(min_verb, str)       if(get_verbosity() >= min_verb) fprintf(stderr, str " in %s, %s, %i\n", __FILE__, __func__, __LINE__)
     #define VERRPRINTF(min_verb, str, ...) if(get_verbosity() >= min_verb) fprintf(stderr, str " in %s, %s, %i\n", __VA_ARGS__, __FILE__, __func__, __LINE__)

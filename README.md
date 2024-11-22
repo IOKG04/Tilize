@@ -15,19 +15,21 @@ For now though, that isn't the case yet. I need to build the software first.
 The following is a goal, as of now, barely anything of this exists
 ```
 Usage:
- Tilize [[options]] [file]              | Tilizes [file] with [options]
- Tilize help                            | Show this message
+ Tilize [[options]] [file]  | Tilizes [file] with [options]
+ Tilize help                | Show this message
 
 Options:
- -o [file]                              | Save output to [file]
- -c [file]                              | Use [file] as configuration
- -j[=number]                            | Use multiple threads ([number] if provided, otherwise maximum amount available)
- -q                                     | Don't show GUI (---)
- -v[=number]                            | Print extra info (---)
-                                        | -1          : Print nothing besides stuff to interact with the user
-                                        | 0           : Print only errors (if !NDEBUG)
-                                        | 1 (default) : Print errors, warnings and process time
-                                        | [more to come]
+ -o [file]                  | Save output to [file]
+ -c [file]                  | Use [file] as configuration
+ -j[=number]                | Use multiple threads ([number] if provided, otherwise maximum amount available)
+ -q                         | Don't show GUI (---)
+ -v[=number]                | Print more (or less) information
+                            | -1          : Print nothing besides stuff to interact with the user
+                            | 0           : Print only errors
+                            | 1 (default) : Print errors, warnings and process time
+                            | 2 (`-v`)    : Print errors, warnings and subprocess times
+                            | [more to come (maybe)]
+ -y                         | Automatically answer `yes` to any question (---)
 
 If the same option is provided multiple times, the last one is used.
 ```

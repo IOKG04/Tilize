@@ -48,11 +48,11 @@ project "Tilize"
     }
 
     filter "configurations:Debug"
-        defines { "DEBUG" }
+        defines { "DEBUG=1" }
         symbols "On"
 
     filter "configurations:Release"
-        defines { "NDEBUG" }
+        defines { "NDEBUG=1" }
         optimize "On"
 
     filter "platforms:NoSDL"
