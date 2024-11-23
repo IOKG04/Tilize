@@ -59,6 +59,9 @@ static const char *help_msg = "Usage:\n"
                           #else
                               " -j=[number]                | Use [number] threads\n"
                           #endif
+                          #if GUI_SUPPORTED
+                              " -q                         | Run without GUI\n"
+                          #endif
                               " -v[=number]                | Print more (or less) information\n"
                               "                            | -1          : Print only interactive prompts\n"
                               "                            | 0           : Print errors\n"
@@ -233,6 +236,20 @@ int main(int argc, const char **argv){
         flag_config.file_outp_path = NULL;
     }
 
+    #if GUI_SUPPORTED
+        // -q option, disable GUI
+        if(option_provided(argc, argv, "-q", &option_index)){
+            // option provided
+            flag_config.showgui = 0;
+        }
+        else{
+            // option not provided
+            flag_config.showgui = 1;
+        }
+    #else
+        flag_config.showgui = 0;
+    #endif
+
     // get load_input_start_ms
     if(get_verbosity() >= 2){
         load_input_start_ms = current_ms();
@@ -254,12 +271,14 @@ int main(int argc, const char **argv){
             VPRINTF(2, "Finished loading input image in %llu ms\n", (long long unsigned)(gui_start_ms - load_input_start_ms ));
         }
 
+        if(!flag_config.showgui) goto _no_init_gui;
         // initialize gui
         if(gui_setup(input_image.width, input_image.height, 1)){
             VERRPRINT(0, "Failed to initialize gui");
             return_code = EXIT_FAILURE;
             goto _clean_and_exit;
         }
+        _no_init_gui:;
     #endif
 
     // get application_start_ms
@@ -293,13 +312,13 @@ int main(int argc, const char **argv){
 
     #if GUI_SUPPORTED
         // wait to exit
-        while(getchar() != '\n');
+        while(flag_config.showgui && getchar() != '\n');
     #endif
 
     // clean and exit
     _clean_and_exit:;
     #if GUI_SUPPORTED
-        gui_free();
+        if(flag_config.showgui) gui_free();
     #endif
     rgb24_texture_destroy(&input_image);
     if(return_code == EXIT_SUCCESS && get_verbosity() >= 1){

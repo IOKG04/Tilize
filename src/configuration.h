@@ -51,12 +51,13 @@ typedef struct tilize_config_t{
 
 // a configuration generated at runtime as a result of flags
 typedef struct flag_config_t{
+    int   showgui;
     int   num_threads;
     char *config_path;          // path of tilize configuration used
     const char *file_outp_path; // path to file output
 } flag_config_t;
 
-#define FLAG_CONFIG_NULL ((flag_config_t){1, NULL, NULL})
+#define FLAG_CONFIG_NULL ((flag_config_t){0, 1, NULL, NULL})
 
 // serializes a configuration into json
 int tilize_config_serialize(char **serialized, const tilize_config_t *restrict config);

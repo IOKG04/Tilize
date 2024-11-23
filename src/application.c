@@ -56,6 +56,9 @@ static int            col1_min,
 static int            __ct_i;
 static mtx_t          ct_i_mtx;
 static const char    *output_file;
+#if GUI_SUPPORTED
+    static int        show_gui;
+#endif
 
 // increments ct_i and returns its previous value
 static int ct_i_increment();
@@ -135,6 +138,9 @@ int application_setup(const tilize_config_t *restrict tilize_config, const flag_
     num_threads = flag_config->num_threads;
     if(num_threads < 1) num_threads = 1;
     output_file = flag_config->file_outp_path;
+    #if GUI_SUPPORTED
+        show_gui = flag_config->showgui;
+    #endif
 
     return 0;
 }
@@ -155,9 +161,11 @@ int application_process(const rgb24_texture_t *restrict input_texture){
     }
 
     #if GUI_SUPPORTED
+        if(!show_gui) goto _post_show_prev;
         // show previous image
         gui_render_texture(0, 0, input_texture);
         gui_present();
+        _post_show_prev:;
     #endif
 
     // do the thing
@@ -187,7 +195,7 @@ int application_process(const rgb24_texture_t *restrict input_texture){
         }
     }
     #if GUI_SUPPORTED
-        gui_present();
+        if(show_gui) gui_present();
     #endif
 
     // output to file
@@ -267,8 +275,10 @@ static int process_loop(void *input_atlas_void){
         }
         #if GUI_SUPPORTED
             // render best tile to gui
-            gui_render_texture(ct_x * input_atlas.tile_width, ct_y * input_atlas.tile_height, &best_pattern_colorized);
-            gui_present();
+            if(show_gui){
+                gui_render_texture(ct_x * input_atlas.tile_width, ct_y * input_atlas.tile_height, &best_pattern_colorized);
+                gui_present();
+            }
         #endif
         // save best tile to input_atlas
         rgb24_atlas_set_tile(&input_atlas, &best_pattern_colorized, ct_x, ct_y);
