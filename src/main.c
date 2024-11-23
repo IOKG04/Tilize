@@ -65,7 +65,7 @@ static const char *help_msg = "Usage:\n"
                               " -v[=number]                | Print more (or less) information\n"
                               "                            | -1          : Print only interactive prompts\n"
                               "                            | 0           : Print errors\n"
-                              "                            | 1 (default) : Print errors, warnings and process time\n"
+                              "                            | 1 (default) : Print errors and warnings\n"
                               "                            | 2 (`-v`)    : Print errors, warnings and subprocess times\n"
                               "\n"
                               "If the same option is provided multiple times, the last one is used.\n"
@@ -113,7 +113,7 @@ int main(int argc, const char **argv){
     }
 
     // flag_start_ms (tilize_start_ms), only after `-v` flag so it doesnt print if `-v=-1` is specified
-    if(get_verbosity() >= 1){
+    if(get_verbosity() >= 2){
         flag_start_ms = current_ms();
     }
 
@@ -211,6 +211,20 @@ int main(int argc, const char **argv){
         flag_config.num_threads = 1;
     }
 
+    #if GUI_SUPPORTED
+        // -q option, disable GUI
+        if(option_provided(argc, argv, "-q", &option_index)){
+            // option provided
+            flag_config.showgui = 0;
+        }
+        else{
+            // option not provided
+            flag_config.showgui = 1;
+        }
+    #else
+        flag_config.showgui = 0;
+    #endif
+
     // -o option, output file
     if(option_provided(argc, argv, "-o", &option_index)){
         // option provided
@@ -225,7 +239,7 @@ int main(int argc, const char **argv){
             printf("Warning: %s already exists. Overwrite (y / N)?\n", flag_config.file_outp_path);
             char yN = getchar();
             if(!(yN == 'y' || yN == 'Y')){
-                VPRINTF(1, "Not overwriting %s, existing\n", flag_config.file_outp_path);
+                VPRINTF(1, "Not overwriting %s, exiting\n", flag_config.file_outp_path);
                 return EXIT_SUCCESS;
             }
             while(getchar() != '\n');
@@ -234,21 +248,16 @@ int main(int argc, const char **argv){
     else{
         // option not provided
         flag_config.file_outp_path = NULL;
+        if(!flag_config.showgui){
+            printf("Warning: Running without any form of output. Proceed (y / N)?\n");
+            char yN = getchar();
+            if(!(yN == 'y' || yN == 'Y')){
+                VPRINT(1, "Not running without an output, exiting\n");
+                return EXIT_SUCCESS;
+            }
+            while(getchar() != '\n');
+        }
     }
-
-    #if GUI_SUPPORTED
-        // -q option, disable GUI
-        if(option_provided(argc, argv, "-q", &option_index)){
-            // option provided
-            flag_config.showgui = 0;
-        }
-        else{
-            // option not provided
-            flag_config.showgui = 1;
-        }
-    #else
-        flag_config.showgui = 0;
-    #endif
 
     // get load_input_start_ms
     if(get_verbosity() >= 2){
@@ -312,6 +321,7 @@ int main(int argc, const char **argv){
 
     #if GUI_SUPPORTED
         // wait to exit
+        printf("Finished Tilizing, press enter to exit\n");
         while(flag_config.showgui && getchar() != '\n');
     #endif
 
@@ -321,10 +331,10 @@ int main(int argc, const char **argv){
         if(flag_config.showgui) gui_free();
     #endif
     rgb24_texture_destroy(&input_image);
-    if(return_code == EXIT_SUCCESS && get_verbosity() >= 1){
+    if(return_code == EXIT_SUCCESS && get_verbosity() >= 2){
         tilize_end_ms = current_ms();
         VPRINTF(2, "Finished deinitialization in %llu ms\n", (long long unsigned)(tilize_end_ms - deinit_start_ms));
-        VPRINTF(1, "Finished Tilize in %llu ms\n", (long long unsigned)(tilize_end_ms - flag_start_ms));
+        VPRINTF(2, "Finished Tilize in %llu ms\n", (long long unsigned)(tilize_end_ms - flag_start_ms));
     }
     return return_code;
 }
