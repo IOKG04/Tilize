@@ -38,7 +38,7 @@ if [ -z "$1" ] || [ "$1" = "help" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; t
 fi
 
 # make command
-if [ "$1" = "make" ]; then
+if [ "$1" = "make" ] || [ "$1" = "build" ]; then
     # builds specified configurations
     function run_premake_and_build () {
         echo "Running premake"
