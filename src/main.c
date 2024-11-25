@@ -67,6 +67,7 @@ static const char *help_msg = "Usage:\n"
                               "                            | 0           : Print errors\n"
                               "                            | 1 (default) : Print errors and warnings\n"
                               "                            | 2 (`-v`)    : Print errors, warnings and subprocess times\n"
+                              " -y                         | Automatically answer `yes` to all questions directed at the user\n"
                               "\n"
                               "If the same option is provided multiple times, the last one is used.\n"
                               "\n";
@@ -83,6 +84,7 @@ int main(int argc, const char **argv){
     tilize_config_t tilize_config = TILIZE_CONFIG_NULL;
     flag_config_t   flag_config   = FLAG_CONFIG_NULL;
     int option_index;
+    int auto_answer_y = 0;
     ms_t flag_start_ms        = 0,
          load_input_start_ms  = 0,
          #if GUI_SUPPORTED
@@ -116,6 +118,10 @@ int main(int argc, const char **argv){
     if(get_verbosity() >= 2){
         flag_start_ms = current_ms();
     }
+
+    // -y option, auto answer yes
+    if(option_provided(argc, argv, "-y", &option_index)) auto_answer_y = 1;
+    else                                                 auto_answer_y = 0;
 
     // -c option, configuration
     if(option_provided(argc, argv, "-c", &option_index)){
@@ -233,22 +239,24 @@ int main(int argc, const char **argv){
             return EXIT_FAILURE;
         }
         flag_config.file_outp_path = argv[option_index + 1];
-        FILE *outp_file_test = fopen(flag_config.file_outp_path, "r");
-        if(outp_file_test){
-            fclose(outp_file_test);
-            printf("Warning: %s already exists. Overwrite (y / N)?\n", flag_config.file_outp_path);
-            char yN = getchar();
-            if(!(yN == 'y' || yN == 'Y')){
-                VPRINTF(1, "Not overwriting %s, exiting\n", flag_config.file_outp_path);
-                return EXIT_SUCCESS;
+        if(!auto_answer_y){
+            FILE *outp_file_test = fopen(flag_config.file_outp_path, "r");
+            if(outp_file_test){
+                fclose(outp_file_test);
+                printf("Warning: %s already exists. Overwrite (y / N)?\n", flag_config.file_outp_path);
+                char yN = getchar();
+                if(!(yN == 'y' || yN == 'Y')){
+                    VPRINTF(1, "Not overwriting %s, exiting\n", flag_config.file_outp_path);
+                    return EXIT_SUCCESS;
+                }
+                while(getchar() != '\n');
             }
-            while(getchar() != '\n');
         }
     }
     else{
         // option not provided
         flag_config.file_outp_path = NULL;
-        if(!flag_config.showgui){
+        if(!auto_answer_y && !flag_config.showgui){
             printf("Warning: Running without any form of output. Proceed (y / N)?\n");
             char yN = getchar();
             if(!(yN == 'y' || yN == 'Y')){

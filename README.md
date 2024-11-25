@@ -29,7 +29,7 @@ Options:
                             | 1 (default) : Print errors, warnings and process time
                             | 2 (`-v`)    : Print errors, warnings and subprocess times
                             | [more to come (maybe)]
- -y                         | Automatically answer `yes` to any question (---)
+ -y                         | Automatically answer `yes` to any question
 
 If the same option is provided multiple times, the last one is used.
 ```
