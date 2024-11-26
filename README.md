@@ -2,13 +2,21 @@
 
 > Do you think your images have too many distinct pixel groups? This might help :3
 
-## Function
+## For Users
 
-Once this is done, which it isn't as of writing this, this tool should be able to take an image,
-split it into n by m rectangles, then choose which of a given number of patterns and color combinations
-preserves that rectangle best, and then replace it with that, resulting in an image made entirely of tiles.
+If you plan on using Tilize, [this](for_users.md) is your file to read, please do so before wondering why stuff doesn't work :3
 
-For now though, that isn't the case yet. I need to build the software first.
+But in short, download the newest version of Tilize from the [Releases](https://github.com/IOKG04/Tilize/releases) section,
+open the directory containing it in the terminal (or the command line, depending on how you want to call it),
+run `.\Tilize help` and then use it as you would any other terminal software.
+
+## For Developers
+
+If you are planning to develop for Tilize, [this](for_devs.md) is the file for you, please read through it :3
+
+In short though, clone the repo, run `premake5 [your build system]` and then build it,
+write any c code in strictly complient c11 and any scripts in Lua.  
+Also read though [for_users.md](for_users.md) of course, it might be pretty helpful to know what it is supposed to do.
 
 ## Usage
 
@@ -36,20 +44,6 @@ If the same option is provided multiple times, the last one is used.
 If something is followed by `(---)`, it is not implemented yet
 
 To make configurations, a script will be provided in the "near" future.
-
-## Building
-
-To build this project, it is required that you have [premake5](https://premake.github.io/) installed.
-
-If you have it, just do what you would do with any project that uses premake. 
-
-The different configurations are
-- `debug_nosdl`
-- `debug_sdl`
-- `release_nosdl`
-- `release_sdl`
-the ones ending in `nosdl` should work on any system supporting the c11 standard,
-the ones ending in `sdl` will require `SDL2` to be installed in order to show a GUI.
 
 ## Credit
 
