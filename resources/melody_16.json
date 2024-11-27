@@ -1,0 +1,25 @@
+{
+	"pattern_path": "melody_tiles.png",
+	"tile_width": 4,
+	"tile_height": 4,
+	"colors": [
+		"23232e",
+		"676b8b",
+		"a3b0bb",
+		"eff5f5",
+		"9dddf0",
+		"c686ca",
+		"7853a7",
+		"3c3e66",
+		"5d91d8",
+		"4d3347",
+		"8e516a",
+		"ce6374",
+		"f4ae70",
+		"f1de82",
+		"6fc453",
+		"3d8367"
+	],
+	"background_color": -1,
+	"foreground_color": -1
+}
