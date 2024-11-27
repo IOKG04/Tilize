@@ -45,6 +45,6 @@
 #endif
 
 // gets the amount of threads available
-int get_thread_count();
+int get_thread_count(void);
 
 #endif

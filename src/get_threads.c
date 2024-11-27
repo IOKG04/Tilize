@@ -45,7 +45,7 @@
 #endif
 
 // gets the amount of threads available
-int get_thread_count(){
+int get_thread_count(void){
     #if GET_THREADS_SUPPORTED
         #if defined(_WIN32)
             SYSTEM_INFO sysinfo;

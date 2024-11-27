@@ -40,7 +40,7 @@
 // sets up application with the provided configs
 int application_setup(const tilize_config_t *restrict tilize_config, const flag_config_t *restrict flag_config);
 // frees everything application uses
-void application_free();
+void application_free(void);
 
 // processes input
 int application_process(const rgb24_texture_t *restrict input_texture);

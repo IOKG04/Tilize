@@ -41,7 +41,7 @@
 static int verbosity = DEFAULT_VERBOSITY;
 
 // gets current verbosity
-int get_verbosity(){
+int get_verbosity(void){
     return verbosity;
 }
 // sets verbosity

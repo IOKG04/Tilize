@@ -105,7 +105,7 @@
         return 0;
     }
     // frees everything gui uses
-    void gui_free(){
+    void gui_free(void){
         mtx_destroy(&render_mtx);
         mtx_destroy(&present_mtx);
         if(gui_surface){
@@ -118,7 +118,7 @@
     }
 
     // renders current visuals to the window
-    int gui_present(){
+    int gui_present(void){
         int trylock_success = mtx_trylock(&present_mtx);
         if(trylock_success == thrd_busy) return 0;
         if(trylock_success != thrd_success){
@@ -247,10 +247,10 @@
         int a = width + height + scalar; a = a + a; // to keep out some warnings
         return 1;
     }
-    void gui_free(){
+    void gui_free(void){
         fprintf(stderr, "Warning: gui_free() not supported at compiletime\n");
     }
-    int gui_present(){
+    int gui_present(void){
         fprintf(stderr, "Warning: gui_present() not supported at compiletime\n");
         return 1;
     }

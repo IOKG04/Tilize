@@ -61,7 +61,7 @@ static const char    *output_file;
 #endif
 
 // increments ct_i and returns its previous value
-static int ct_i_increment();
+static int ct_i_increment(void);
 // performs the loop that does the thing
 static int process_loop(void *input_atlas_void);
 // gets difference between a pattern with specific colors and an rgb24_t array
@@ -145,7 +145,7 @@ int application_setup(const tilize_config_t *restrict tilize_config, const flag_
     return 0;
 }
 // frees everything application uses
-void application_free(){
+void application_free(void){
     num_colors = 0;
     if(colors) free(colors);
     rgb24_atlas_destroy(&pattern_atlas);
@@ -221,7 +221,7 @@ int application_process(const rgb24_texture_t *restrict input_texture){
 }
 
 // increments ct_i and returns its previous value
-static int ct_i_increment(){
+static int ct_i_increment(void){
     if(mtx_lock(&ct_i_mtx) != thrd_success){
         VERRPRINT(0, "Failed to lock ct_i_mtx");
         return -1;

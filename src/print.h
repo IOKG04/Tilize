@@ -50,7 +50,7 @@
 #endif
 
 // gets current verbosity
-int get_verbosity();
+int get_verbosity(void);
 // sets verbosity
 void set_verbosity(int v);
 

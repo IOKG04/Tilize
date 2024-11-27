@@ -87,7 +87,7 @@ static int option_provided(int argc, const char **argv, const char *restrict opt
 // makes a copy of src and returns it
 static char *strdup_exceptmyversionsobettercauseitisntc23exclusive(const char *restrict src);
 // gets current time in ms
-static ms_t current_ms();
+static ms_t current_ms(void);
 
 int main(int argc, const char **argv){
     int return_code = EXIT_SUCCESS;
@@ -387,7 +387,7 @@ static char *strdup_exceptmyversionsobettercauseitisntc23exclusive(const char *r
     return outp;
 }
 // gets current time in ms
-static ms_t current_ms(){
+static ms_t current_ms(void){
     #if defined(_WIN32)
         return GetTickCount();
     #elif defined(__unix__)
