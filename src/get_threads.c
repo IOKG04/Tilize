@@ -35,7 +35,11 @@
 
 #include <stdio.h>
 #if defined(_WIN32)
-    #include <Windows.h>
+    #if defined(__MINGW32__)
+        #include <windows.h> // for whatever reason its with a non capital 'W' with mingw, so ig ill say that extra :333
+    #else
+        #include <Windows.h>
+    #endif
 #elif defined(__unix__)
     #include <unistd.h>
 #endif

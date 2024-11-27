@@ -1,0 +1,30 @@
+name: Build for Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install mingw-w64 and premake
+        run: |
+          sudo apt-get install -y mingw-w64 make
+          curl -L -o premake5_download.tar.gz https://github.com/premake/premake-core/releases/download/v5.0.0-beta3/premake-5.0.0-beta3-linux.tar.gz
+          tar -xvzf premake5_download.tar.gz
+          chmod +x premake5
+
+      - name: Build the project
+        run: |
+          ./premake5 gmake2
+          make config=release_nosdl CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ CFLAGS="-I/usr/x86_64-w64-mingw32/include" CXXFLAGS="-I/usr/x86_64-w64-mingw32/include" LDFLAGS="-L/usr/x86_64-w64-mingw32/lib"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tilize_win
+          path: bin/Release_NoSDL/

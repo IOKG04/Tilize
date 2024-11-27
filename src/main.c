@@ -35,7 +35,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <time.h>
+#if defined(_WIN32)
+    #if defined(__MINGW32__)
+        #include <windows.h> // for whatever reason its with a non capital 'W' with mingw, so ig ill say that extra :333
+    #else
+        #include <Windows.h>
+    #endif
+#elif defined(__unix__)
+    #include <time.h>
+#endif
 #include "application.h"
 #include "atlas.h"
 #include "get_threads.h"
@@ -369,16 +377,27 @@ static char *strdup_exceptmyversionsobettercauseitisntc23exclusive(const char *r
         VERRPRINT(0, "Failed to allocate outp");
         return NULL;
     }
-    strncpy(outp, src, src_len);
+    #if defined(__MINGW32__)
+        strcpy(outp, src); // i [beep]ing hate you, mingw-gcc
+    #else
+        strncpy(outp, src, src_len);
+    #endif
     return outp;
 }
 // gets current time in ms
 static ms_t current_ms(){
-    struct timespec ts;
-    if(!timespec_get(&ts, TIME_UTC)){
-        VERRPRINT(0, "Failed to get current time");
-        VPRINT(1, "Please ignore any timing information given after this\n");
+    #if defined(_WIN32)
+        return GetTickCount();
+    #elif defined(__unix__)
+        struct timespec ts;
+        if(!timespec_get(&ts, TIME_UTC)){
+            VERRPRINT(0, "Failed to get current time");
+            VPRINT(1, "Please ignore any timing information given after this\n");
+            return 0;
+        }
+        return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+    #else
+        fprintf(stderr, "Warning: current_ms() not supported at compiletime\n");
         return 0;
-    }
-    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+    #endif
 }
