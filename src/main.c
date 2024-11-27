@@ -78,6 +78,8 @@ static const char *help_msg = "Usage:\n"
                               " -y                         | Automatically answer `yes` to all questions directed at the user\n"
                               "\n"
                               "If the same option is provided multiple times, the last one is used.\n"
+                              "\n"
+                              "Compiled on " __DATE__ "\n"
                               "\n";
 
 // returns whether or not an option with the name opt_name was provided, if so puts its index into index
