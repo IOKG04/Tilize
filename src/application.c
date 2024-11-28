@@ -69,25 +69,44 @@ static unsigned long get_difference(const rgb24_t *restrict data, int pattern_in
 
 // sets up application with the provided configs
 int application_setup(const tilize_config_t *restrict tilize_config, const flag_config_t *restrict flag_config){
-    // get final pattern path
-    #define PP_LEN 255
-    char pattern_path[PP_LEN + 1] = "";
-    strncpy(pattern_path, flag_config->config_path, PP_LEN);
-    char *last_slash = strrchr(pattern_path, '/');
-    if(last_slash == NULL){
-        strncpy(pattern_path, tilize_config->pattern_path, PP_LEN);
+    // load pattern texture
+    rgb24_texture_t pattern_texture = RGB24_TEXTURE_NULL;
+    if(!(flag_config->config_path == NULL || tilize_config->pattern_path == NULL)){
+        // path provided
+        // get final pattern path
+        #define PP_LEN 255
+        char pattern_path[PP_LEN + 1] = "";
+        strncpy(pattern_path, flag_config->config_path, PP_LEN);
+        char *last_slash = strrchr(pattern_path, '/');
+        if(last_slash == NULL) last_slash = strrchr(pattern_path, '\\'); // retry with '\'
+        if(last_slash == NULL){
+            strncpy(pattern_path, tilize_config->pattern_path, PP_LEN);
+        }
+        else{
+            ++last_slash;
+            strncpy(last_slash, tilize_config->pattern_path, PP_LEN - (last_slash - pattern_path));
+        }
+        #undef PP_LEN
+
+        // load pattern as texture
+        if(load_png(&pattern_texture, pattern_path)){
+            VERRPRINT(0, "Failed to load pattern_texture");
+            return 1;
+        }
     }
     else{
-        ++last_slash;
-        strncpy(last_slash, tilize_config->pattern_path, PP_LEN - (last_slash - pattern_path));
-    }
-    #undef PP_LEN
-
-    // load pattern as texture
-    rgb24_texture_t pattern_texture = RGB24_TEXTURE_NULL;
-    if(load_png(&pattern_texture, pattern_path)){
-        VERRPRINT(0, "Failed to load pattern_texture");
-        return 1;
+        // path not provided, generating at runtime
+        // is based on default tilize config defined in `main.c` in `main()`
+        if(rgb24_texture_create(&pattern_texture, 8, 4)){
+            VERRPRINT(0, "Failed to create pattern_texture");
+            return 1;
+        }
+        for(int i = 0; i < 4 * 8; ++i){ // lets just hope the compiler takes care of optimizing this
+            const int x = i % 8,
+                      y = i / 8;
+            if(x <= 1 || (x >= 4 && y <= 1)) pattern_texture.data[i] = RGB24(0xff, 0xff, 0xff);
+            else                             pattern_texture.data[i] = RGB24(0x00, 0x00, 0x00);
+        }
     }
 
     // create ct_i_mtx

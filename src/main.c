@@ -179,10 +179,10 @@ int main(int argc, const char **argv){
         }
     }
     else{
-        // config file not provided or failed to load
-        flag_config.config_path = "resources/this_shouldnt_be_real.json";
+        // config file not provided
+        flag_config.config_path = NULL;
 
-        tilize_config.pattern_path = "simpletiles_4x4.png";
+        tilize_config.pattern_path = NULL;
         tilize_config.tile_width   = 4;
         tilize_config.tile_height  = 4;
         tilize_config.num_colors   = 2;
