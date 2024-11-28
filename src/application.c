@@ -44,6 +44,15 @@
 #include "texture.h"
 #include "tinycthread.h"
 
+// try to present to gui every ... itterations of the loop (to speed up stuff obv)
+#define PRESENT_ITERATIONS 16
+
+// all data needed by a thread running the application
+struct app_thread_data{
+    int ct_min, ct_max; // minimum and maximum (exclusive) tile indecies computed by thread
+    rgb24_atlas_t *input_atlas;
+};
+
 // data currently operated on
 static int            num_threads;
 static int            num_colors;
@@ -53,17 +62,13 @@ static int            col1_min,
                       col1_max,
                       col2_min,
                       col2_max;
-static int            __ct_i;
-static mtx_t          ct_i_mtx;
 static const char    *output_file;
 #if GUI_SUPPORTED
     static int        show_gui;
 #endif
 
-// increments ct_i and returns its previous value
-static int ct_i_increment(void);
 // performs the loop that does the thing
-static int process_loop(void *input_atlas_void);
+static int process_loop(void *input_data_void);
 // gets difference between a pattern with specific colors and an rgb24_t array
 static unsigned long get_difference(const rgb24_t *restrict data, int pattern_index, int col1, int col2);
 
@@ -107,12 +112,6 @@ int application_setup(const tilize_config_t *restrict tilize_config, const flag_
             if(x <= 1 || (x >= 4 && y <= 1)) pattern_texture.data[i] = RGB24(0xff, 0xff, 0xff);
             else                             pattern_texture.data[i] = RGB24(0x00, 0x00, 0x00);
         }
-    }
-
-    // create ct_i_mtx
-    if(mtx_init(&ct_i_mtx, mtx_plain) != thrd_success){
-        VERRPRINT(0, "Failed to initialize ct_i_mtx");
-        return 1;
     }
 
     // split pattern_texture into pattern_atlas and clean
@@ -188,23 +187,35 @@ int application_process(const rgb24_texture_t *restrict input_texture){
     #endif
 
     // do the thing
-    __ct_i = 0;
-    thrd_t *process_threads = NULL;
+    thrd_t                 *process_threads = NULL;
+    struct app_thread_data *thread_data     = NULL;
     if(num_threads > 1){
-        process_threads = malloc((num_threads - 1) * sizeof(thrd_t));
+        process_threads = malloc((num_threads - 1) * sizeof(*process_threads));
         if(!process_threads){
             VERRPRINT(0, "Failed to allocate process_threads");
             goto _main_process;
         }
+        thread_data = malloc((num_threads - 1) * sizeof(*thread_data));
+        if(!thread_data){
+            VERRPRINT(0, "Failed to allocate thread_data");
+            goto _main_process;
+        }
         for(int i = 0; i < num_threads - 1; ++i){
-            if(thrd_create(&process_threads[i], &process_loop, &input_atlas) != thrd_success){
+            thread_data[i].ct_min      = (input_atlas.tile_amount_x * input_atlas.tile_amount_y) * (i + 1) / num_threads;
+            thread_data[i].ct_max      = (input_atlas.tile_amount_x * input_atlas.tile_amount_y) * (i + 2) / num_threads;
+            thread_data[i].input_atlas = &input_atlas;
+            if(thrd_create(&process_threads[i], &process_loop, &thread_data[i]) != thrd_success){
                 VERRPRINTF(0, "Failed to initialize process_threads[%i]", i);
                 goto _main_process;
             }
         }
     }
     _main_process:;
-    process_loop(&input_atlas);
+    struct app_thread_data main_thrd_data;
+    main_thrd_data.ct_min      = 0;
+    main_thrd_data.ct_max      = input_atlas.tile_amount_x * input_atlas.tile_amount_y / num_threads;
+    main_thrd_data.input_atlas = &input_atlas;
+    process_loop(&main_thrd_data);
     if(num_threads > 1){
         if(process_threads){
             for(int i = 0; i < num_threads - 1; ++i){
@@ -212,6 +223,7 @@ int application_process(const rgb24_texture_t *restrict input_texture){
             }
             free(process_threads);
         }
+        if(thread_data) free(thread_data);
     }
     #if GUI_SUPPORTED
         if(show_gui) gui_present();
@@ -239,31 +251,20 @@ int application_process(const rgb24_texture_t *restrict input_texture){
     return 0;
 }
 
-// increments ct_i and returns its previous value
-static int ct_i_increment(void){
-    if(mtx_lock(&ct_i_mtx) != thrd_success){
-        VERRPRINT(0, "Failed to lock ct_i_mtx");
-        return -1;
-    }
-    int outp = __ct_i;
-    ++__ct_i;
-    if(mtx_unlock(&ct_i_mtx) != thrd_success){
-        VERRPRINT(0, "Failed to unlock ct_i_mtx");
-        return -1;
-    }
-    return outp;
-}
 // performs the loop that does the thing
-static int process_loop(void *input_atlas_void){
-    #define input_atlas (*(rgb24_atlas_t *)input_atlas_void)
-    int ct_i;
-    while((ct_i = ct_i_increment()) < input_atlas.tile_amount_x * input_atlas.tile_amount_y){
-        const int ct_x = ct_i % input_atlas.tile_amount_x,
-                  ct_y = ct_i / input_atlas.tile_amount_x;
+static int process_loop(void *input_data_void){
+    // macros for convenience
+    #define input_data  ((struct app_thread_data *)input_data_void)
+    #define input_atlas (input_data->input_atlas)
+    const int ct_min = input_data->ct_min,
+              ct_max = input_data->ct_max;
+    for(int ct_i = ct_min; ct_i < ct_max; ++ct_i){
+        const int ct_x = ct_i % input_atlas->tile_amount_x,
+                  ct_y = ct_i / input_atlas->tile_amount_x;
 
         // do the thing
         // TODO: make more readable and such
-        const rgb24_t *current_tile = input_atlas.data[ct_i];
+        const rgb24_t *current_tile = input_atlas->data[ct_i];
         unsigned long lowest_diff = ULONG_MAX;
         int lowest_pt   = 0,
             lowest_col1 = 0,
@@ -295,16 +296,18 @@ static int process_loop(void *input_atlas_void){
         #if GUI_SUPPORTED
             // render best tile to gui
             if(show_gui){
-                gui_render_texture(ct_x * input_atlas.tile_width, ct_y * input_atlas.tile_height, &best_pattern_colorized);
-                gui_present();
+                gui_render_texture(ct_x * input_atlas->tile_width, ct_y * input_atlas->tile_height, &best_pattern_colorized);
+                // try presenting every ... tiles
+                if(ct_i % PRESENT_ITERATIONS == 0) gui_present();
             }
         #endif
         // save best tile to input_atlas
-        rgb24_atlas_set_tile(&input_atlas, &best_pattern_colorized, ct_x, ct_y);
+        rgb24_atlas_set_tile(input_atlas, &best_pattern_colorized, ct_x, ct_y);
         // clean up
         rgb24_texture_destroy(&best_pattern_colorized);
     }
     return 0;
+    #undef input_data
     #undef input_atlas
 }
 // gets difference between a pattern with specific colors and an rgb24_t array
