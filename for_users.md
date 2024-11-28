@@ -52,12 +52,47 @@ There are more options of course, you can see them by executing `Tilize help`.
 ## Configurations
 
 Configurations contain mainly three things:
-a path to the image file where all the different *tiles*, or rectangles in the explanation from earlier, are shown,
-the dimensions of those tiles, and the colors used.
+a path to the image file (relative to the configuration file) where all the different *tiles*, or rectangles in the explanation from earlier, are shown,
+the dimensions of those tiles,
+and the colors used for them.
 
-I am honestly too lazy to write about this right now, so uhh,
-use the `make-config.lua` script if you want to make your own configuration files without typing json by hand,
-and for anything else just ask me, I'll add it here eventually.
+### Pattern images
+
+Pattern images are the images containing info about the tiles, namely which ones exist.
+A pattern image is usually a black and white image of some amount of smaller images,
+the rectangles from the explanation earlier which I'll stop refering to now, each with the same dimensions.  
+These dimensions are the width and height of a tile, which you will need for later.
+
+While usually just black and white, where black represents the "background" and white the "foreground",
+you can use any image as a pattern image. Under the hood, it just compares the red channel to `128`.
+If it's less than that, the pixel is part of the background. If not, foreground.
+
+### `config-maker.lua`
+
+If you want to make your own configuration, I would recommend running [config-maker.lua](resources/config-maker.lua), as it will handle all the json stuff.
+
+To use it, run `lua config-maker.lua` or `./config-maker.lua` if you are on a unix system.
+As the first argument, tell it how you want to call your new configuration,
+for example, to get a configuration called `myconfig.json`, the command would be `lua config-maker.lua myconfig.json`.
+
+After that, you will be asked for a couple things, here is what to enter:  
+- `Location of pattern?`: Here you will want to type in the path to the image file containing the different patterns.
+  For whatever reason relative paths or ones containing `~` dont work, so you will have to use an absolute path.
+- `Tile dimensions?`: Here you enter how big your tiles are. This depends on the pattern image you created.
+- `Color [number]?`: Here you are asked to input all the colors you want in your configuration.
+  White is `FFFFFF`, black is `000000`. If you don't know the hex codes of your favorite colors,
+  I recommend [googling "color picker"](https://www.google.com/search?q=color+picker) and then copying the `HEX` value.
+  Be careful to not copy the `#` though, as `config-maker.lua` does not support it as of writing.  
+  Once you've put in all the colors you want, press `Enter`/`Return` without any input.
+- `Background` and `Foreground color?`: Here you can tell the program that the background (or foreground) should be a single color
+  and that it shouldn't use whatever is technically best.
+  This can be useful if you want to create ASCII like art or anything else where it's good to have one dominant color.  
+  If you want all colors to be picked from, leave the lines empty.
+
+After that, you should be done, the program takes care of the rest.
+
+If you intend on sharing the configuration, copy the pattern image it uses too.
+It will automatically be copied to the same directory as the configuration.
 
 ## QNA
 
