@@ -350,16 +350,16 @@ int main(int argc, const char **argv){
         if(flag_config.showgui){
             printf("Finished Tilizing, press any key to exit\n");
             int waiting = 1;
+            SDL_Event e;
+            SDL_PumpEvents();
+            while(SDL_PollEvent(&e)); // remove all events
             while(waiting){
-                SDL_PumpEvents();
-                SDL_Event e;
-                while(SDL_PollEvent(&e)){
-                    switch(e.type){
-                        case SDL_QUIT:
-                        case SDL_KEYDOWN:
-                            waiting = 0;
-                            break;
-                    }
+                if(SDL_WaitEvent(&e) != 1) break; // learned of this in some cherno vid, so cherno, if u react to this, know that u have already improved my code :3
+                switch(e.type){
+                    case SDL_QUIT:
+                    case SDL_KEYDOWN:
+                        waiting = 0;
+                        break;
                 }
             }
         }
