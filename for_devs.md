@@ -22,11 +22,6 @@ In case you wonder why I'm downloading the dependencies to the project directory
 the answer is simplicity, I want both the experience of using the software and developing it to be as simple as possible,
 and any extra external dependency would make compiling the project harder.
 
-### IMPORTANT
-
-If you build one of the SDL versions, you will not be able to close the program with `ctrl+c` or anything else short of htop or whatever you use to send `SIGKILL`.
-I will come around to fixing this eventually, but that is the reason why the default version people can download is the NoSDL version.
-
 ## Languages used
 
 ### Tilize

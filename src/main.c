@@ -52,6 +52,9 @@
 #include "print.h"
 #include "rgb24.h"
 #include "texture.h"
+#if GUI_SUPPORTED
+    #include <SDL2/SDL.h>
+#endif
 
 typedef long long unsigned ms_t;
 
@@ -324,6 +327,11 @@ int main(int argc, const char **argv){
         return_code = EXIT_FAILURE;
         goto _clean_and_exit;
     }
+    #if GUI_SUPPORTED
+        if(flag_config.showgui){
+            printf("Tilizing, press Q or Escape to cancel\n");
+        }
+    #endif
     if(application_process(&input_image)){
         VERRPRINT(0, "Failed to process input_image");
         return_code = EXIT_FAILURE;
@@ -339,8 +347,22 @@ int main(int argc, const char **argv){
 
     #if GUI_SUPPORTED
         // wait to exit
-        printf("Finished Tilizing, press enter to exit\n");
-        while(flag_config.showgui && getchar() != '\n');
+        if(flag_config.showgui){
+            printf("Finished Tilizing, press any key to exit\n");
+            int waiting = 1;
+            while(waiting){
+                SDL_PumpEvents();
+                SDL_Event e;
+                while(SDL_PollEvent(&e)){
+                    switch(e.type){
+                        case SDL_QUIT:
+                        case SDL_KEYDOWN:
+                            waiting = 0;
+                            break;
+                    }
+                }
+            }
+        }
     #endif
 
     // clean and exit

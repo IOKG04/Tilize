@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <stdatomic.h>
 #include "atlas.h"
 #include "configuration.h"
 #include "gui.h"
@@ -43,6 +44,9 @@
 #include "print.h"
 #include "texture.h"
 #include "tinycthread.h"
+#if GUI_SUPPORTED
+    #include <SDL2/SDL.h>
+#endif
 
 // try to present to gui every ... itterations of the loop (to speed up stuff obv)
 #define PRESENT_ITERATIONS 16
@@ -51,6 +55,10 @@
 struct app_thread_data{
     int ct_min, ct_max; // minimum and maximum (exclusive) tile indecies computed by thread
     rgb24_atlas_t *input_atlas;
+    atomic_int *running;
+    #if GUI_SUPPORTED
+        int check_sdl;
+    #endif
 };
 
 // data currently operated on
@@ -187,6 +195,8 @@ int application_process(const rgb24_texture_t *restrict input_texture){
     #endif
 
     // do the thing
+    atomic_int running;
+    atomic_store(&running, 1);
     thrd_t                 *process_threads = NULL;
     struct app_thread_data *thread_data     = NULL;
     if(num_threads > 1){
@@ -201,9 +211,13 @@ int application_process(const rgb24_texture_t *restrict input_texture){
             goto _main_process;
         }
         for(int i = 0; i < num_threads - 1; ++i){
-            thread_data[i].ct_min      = (input_atlas.tile_amount_x * input_atlas.tile_amount_y) * (i + 1) / num_threads;
-            thread_data[i].ct_max      = (input_atlas.tile_amount_x * input_atlas.tile_amount_y) * (i + 2) / num_threads;
-            thread_data[i].input_atlas = &input_atlas;
+            thread_data[i].ct_min        = (input_atlas.tile_amount_x * input_atlas.tile_amount_y) * (i + 1) / num_threads;
+            thread_data[i].ct_max        = (input_atlas.tile_amount_x * input_atlas.tile_amount_y) * (i + 2) / num_threads;
+            thread_data[i].input_atlas   = &input_atlas;
+            thread_data[i].running       = &running;
+            #if GUI_SUPPORTED
+                thread_data[i].check_sdl = (i == 2) ? 1 : 0;
+            #endif
             if(thrd_create(&process_threads[i], &process_loop, &thread_data[i]) != thrd_success){
                 VERRPRINTF(0, "Failed to initialize process_threads[%i]", i);
                 goto _main_process;
@@ -212,14 +226,21 @@ int application_process(const rgb24_texture_t *restrict input_texture){
     }
     _main_process:;
     struct app_thread_data main_thrd_data;
-    main_thrd_data.ct_min      = 0;
-    main_thrd_data.ct_max      = input_atlas.tile_amount_x * input_atlas.tile_amount_y / num_threads;
-    main_thrd_data.input_atlas = &input_atlas;
-    process_loop(&main_thrd_data);
+    main_thrd_data.ct_min        = 0;
+    main_thrd_data.ct_max        = input_atlas.tile_amount_x * input_atlas.tile_amount_y / num_threads;
+    main_thrd_data.input_atlas   = &input_atlas;
+    main_thrd_data.running       = &running;
+    #if GUI_SUPPORTED
+        main_thrd_data.check_sdl = (num_threads > 1) ? 0 : 1;
+    #endif
+    int total_ret_code = 0;
+    total_ret_code |= process_loop(&main_thrd_data);
     if(num_threads > 1){
         if(process_threads){
             for(int i = 0; i < num_threads - 1; ++i){
-                thrd_join(process_threads[i], NULL);
+                int ret_code;
+                thrd_join(process_threads[i], &ret_code);
+                total_ret_code |= ret_code;
             }
             free(process_threads);
         }
@@ -228,6 +249,12 @@ int application_process(const rgb24_texture_t *restrict input_texture){
     #if GUI_SUPPORTED
         if(show_gui) gui_present();
     #endif
+
+    if(total_ret_code){
+        VERRPRINT(0, "Failed to complete all threads or cancelled");
+        rgb24_atlas_destroy(&input_atlas);
+        return 1;
+    }
 
     // output to file
     if(output_file){
@@ -259,6 +286,7 @@ static int process_loop(void *input_data_void){
     const int ct_min = input_data->ct_min,
               ct_max = input_data->ct_max;
     for(int ct_i = ct_min; ct_i < ct_max; ++ct_i){
+        if(!atomic_load(input_data->running)) return 1; // exit if told to do so
         const int ct_x = ct_i % input_atlas->tile_amount_x,
                   ct_y = ct_i / input_atlas->tile_amount_x;
 
@@ -299,6 +327,23 @@ static int process_loop(void *input_data_void){
                 gui_render_texture(ct_x * input_atlas->tile_width, ct_y * input_atlas->tile_height, &best_pattern_colorized);
                 // try presenting every ... tiles
                 if(ct_i % PRESENT_ITERATIONS == 0) gui_present();
+            }
+            if(input_data->check_sdl){
+                SDL_PumpEvents();
+                SDL_Event e;
+                while(SDL_PollEvent(&e)){
+                    switch(e.type){
+                        case SDL_QUIT:
+                            atomic_store(input_data->running, 0);
+                            break;
+                        case SDL_KEYDOWN:
+                            if(e.key.keysym.scancode == SDL_SCANCODE_Q ||
+                               e.key.keysym.scancode == SDL_SCANCODE_ESCAPE){
+                                atomic_store(input_data->running, 0);
+                            }
+                            break;
+                    }
+                }
             }
         #endif
         // save best tile to input_atlas
