@@ -83,7 +83,8 @@ static const char *help_msg = "Usage:\n"
                               "If the same option is provided multiple times, the last one is used.\n"
                               "\n"
                               "Compiled on " __DATE__ "\n"
-                              "\n";
+                              "\n"
+                              "Copyright (c) 2024 rue04, licensed under the MIT License\n";
 
 // returns whether or not an option with the name opt_name was provided, if so puts its index into index
 static int option_provided(int argc, const char **argv, const char *restrict opt_name, int *restrict index);

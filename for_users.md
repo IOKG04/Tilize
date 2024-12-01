@@ -97,3 +97,14 @@ It will automatically be copied to the same directory as the configuration.
 ## QNA
 
 If you have any questions, ask them in an issue and I will try to add the answer here.
+
+## Credit
+
+This project uses [cJSON](https://github.com/DaveGamble/cJSON) by [DaveGamble](https://github.com/DaveGamble) and others, distributed under the [MIT License](https://github.com/DaveGamble/cJSON/blob/master/LICENSE),  
+[tinycthread](https://github.com/tinycthread/tinycthread), distributed under a license which's name i cant find, it's [here](https://github.com/tinycthread/tinycthread/blob/master/README.txt) though,  
+and parts of [stb](https://github.com/nothings/stb), distributed under the [MIT License and the Unlicense](https://github.com/nothings/stb/blob/master/LICENSE) (where you just choose which one you prefer, and cause I don't have opinions on that I'll just show both :3).
+
+The [rounded_6x6](resources/round_6x6.png) font is from [here](https://frostyfreeze.itch.io/pixel-bitmap-fonts-png-xml), licensed under CC0,
+the color palette used for the [melody_16](resources/melody_16.json) and [melody_16_big](resources/melody_16_big.json) configurations comes from [here](https://lospec.com/palette-list/melody-16), and I hope it's okay to use...
+
+###### Had to copy it here too, cause otherwise the binary wouldn't have the credit...

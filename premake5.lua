@@ -44,7 +44,9 @@ project "Tilize"
     warnings "Extra"
 
     postbuildcommands {
-        "{COPYDIR} resources/ %{cfg.buildtarget.directory}/"
+        "{COPYDIR} resources/ %{cfg.buildtarget.directory}/",
+        "{COPYFILE} LICENSE %{cfg.buildtarget.directory}/MIT_License.txt",
+        "{COPYFILE} for_users.md %{cfg.buildtarget.directory}/README.md",
     }
 
     filter "configurations:Debug"
