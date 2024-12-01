@@ -44,7 +44,7 @@ project "Tilize"
     warnings "Extra"
 
     postbuildcommands {
-        "{COPYDIR} resources/ %{cfg.buildtarget.directory}/resources/"
+        "{COPYDIR} resources/ %{cfg.buildtarget.directory}/"
     }
 
     filter "configurations:Debug"

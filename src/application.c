@@ -250,10 +250,15 @@ int application_process(const rgb24_texture_t *restrict input_texture){
         if(show_gui) gui_present();
     #endif
 
-    if(total_ret_code){
-        VERRPRINT(0, "Failed to complete all threads or cancelled");
+    if(total_ret_code & 1){
+        VERRPRINT(0, "Failed to complete all threads");
         rgb24_atlas_destroy(&input_atlas);
         return 1;
+    }
+    else if(total_ret_code & 2){
+        VPRINT(1, "Cancelled Tilizing\n");
+        rgb24_atlas_destroy(&input_atlas);
+        return 0;
     }
 
     // output to file
@@ -286,7 +291,7 @@ static int process_loop(void *input_data_void){
     const int ct_min = input_data->ct_min,
               ct_max = input_data->ct_max;
     for(int ct_i = ct_min; ct_i < ct_max; ++ct_i){
-        if(!atomic_load(input_data->running)) return 1; // exit if told to do so
+        if(!atomic_load(input_data->running)) return 2; // exit if told to do so
         const int ct_x = ct_i % input_atlas->tile_amount_x,
                   ct_y = ct_i / input_atlas->tile_amount_x;
 

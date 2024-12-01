@@ -348,7 +348,7 @@ int main(int argc, const char **argv){
     #if GUI_SUPPORTED
         // wait to exit
         if(flag_config.showgui){
-            printf("Finished Tilizing, press any key to exit\n");
+            printf("Finished Tilizing, press Q or Escape to exit\n");
             int waiting = 1;
             SDL_Event e;
             SDL_PumpEvents();
@@ -357,8 +357,13 @@ int main(int argc, const char **argv){
                 if(SDL_WaitEvent(&e) != 1) break; // learned of this in some cherno vid, so cherno, if u react to this, know that u have already improved my code :3
                 switch(e.type){
                     case SDL_QUIT:
-                    case SDL_KEYDOWN:
                         waiting = 0;
+                        break;
+                    case SDL_KEYDOWN:
+                        if(e.key.keysym.scancode == SDL_SCANCODE_Q ||
+                           e.key.keysym.scancode == SDL_SCANCODE_ESCAPE){
+                            waiting = 0;
+                        }
                         break;
                 }
             }

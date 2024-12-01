@@ -55,10 +55,14 @@ if [ "$1" = "make" ] || [ "$1" = "build" ]; then
         run_premake_and_build debug_nosdl
     elif [ "$2" = "debug" ] && [ "$3" = "sdl" ]; then
         run_premake_and_build debug_sdl
-    elif [ "$2" = "release" ] && [ "$3" = "nosdl" ]; then
+    elif [ "$2" = "release" ] && ( [ -z "$3" ] || [ "$3" = "nosdl" ] ); then
         run_premake_and_build release_nosdl
     elif [ "$2" = "release" ] && [ "$3" = "sdl" ]; then
         run_premake_and_build release_sdl
+    elif [ "$2" = "nosdl" ]; then
+        run_premake_and_build debug_nosdl
+    elif [ "$2" = "sdl" ]; then
+        run_premake_and_build debug_sdl
     elif [ "$2" = "all" ]; then
         run_premake_and_build debug_nosdl release_nosdl debug_sdl release_sdl
     fi
